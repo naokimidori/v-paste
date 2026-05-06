@@ -1,0 +1,45 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# Build products
+build/
+DerivedData/
+dist/
+*.xcresult
+*.xcarchive
+*.app.dSYM
+
+# Distribution artifacts
+*.dmg
+*.zip
+*.pkg
+*.ipa
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Package.resolved
+
+# Local environment and signing material
+.env
+*.pem
+*.p12
+*.cer
+*.mobileprovision
+*.provisionprofile
+ExportOptions.plist
+
+# Codex / local agent workspaces
+.codex/
+.superpowers/
+.worktrees/
+task_plan.md
+findings.md
+progress.md

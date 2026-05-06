@@ -1,0 +1,662 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		29DB8AFA40194E3266EACE34 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD562612AF37B01BAEE7003 /* AppDelegate.swift */; };
+		4756D7E8FA57407DA2528585 /* SQLiteDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E77E5CE7CD4DA2A48313E0 /* SQLiteDatabase.swift */; };
+		57CC7ED16C1997BA0AB86599 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF2308247E1BA81516E4220 /* AppState.swift */; };
+		6666C37A22444A47BFE705AD /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AC3E7BE437F4B6588E77F0B /* AppPaths.swift */; };
+		7F7FFD2FD08BEC7653F2026E /* VPasteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF13DF9BA5E93855BBD7457C /* VPasteApp.swift */; };
+		9F6A7B8C1D2E3F4000000011 /* HistoryPanelViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F6A7B8C1D2E3F4000000010 /* HistoryPanelViewModel.swift */; };
+		9F6A7B8C1D2E3F4000000002 /* HistoryPanelViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F6A7B8C1D2E3F4000000001 /* HistoryPanelViewModelTests.swift */; };
+		A60000000000000000000001 /* LinkMetadataFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60000000000000000000011 /* LinkMetadataFetcher.swift */; };
+		A70000000000000000000001 /* HistoryPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A70000000000000000000011 /* HistoryPanelController.swift */; };
+		A70000000000000000000002 /* HistoryPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A70000000000000000000012 /* HistoryPanelView.swift */; };
+		A70000000000000000000003 /* HistoryCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A70000000000000000000013 /* HistoryCardView.swift */; };
+		A80000000000000000000001 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A80000000000000000000011 /* MenuBarController.swift */; };
+		A80000000000000000000002 /* GlobalHotKeyMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A80000000000000000000012 /* GlobalHotKeyMonitor.swift */; };
+		A80000000000000000000003 /* MenuBarMenuDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A80000000000000000000013 /* MenuBarMenuDescriptor.swift */; };
+		A81000000000000000000001 /* SettingsTabDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A81000000000000000000011 /* SettingsTabDescriptor.swift */; };
+		A81000000000000000000002 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A81000000000000000000012 /* SettingsView.swift */; };
+		A81000000000000000000003 /* SettingsPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A81000000000000000000013 /* SettingsPanelController.swift */; };
+		A90000000000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A90000000000000000000011 /* Assets.xcassets */; };
+		B6681894BFA4BFE324D77157 /* AppStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7EE701F4476F5496ECD4DAF /* AppStateTests.swift */; };
+		B40000000000000000000002 /* ClipboardGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40000000000000000000001 /* ClipboardGroup.swift */; };
+		BAB5AC595C671D49D57D5F9C /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE9FB34DCC224B298BFB9D /* ClipboardItem.swift */; };
+		C1A4B77A9D15E6AB4F7C2003 /* AssetCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A4B77A9D15E6AB4F7C1003 /* AssetCache.swift */; };
+		C1A4B77A9D15E6AB4F7C2004 /* ClipboardNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A4B77A9D15E6AB4F7C1004 /* ClipboardNormalizer.swift */; };
+		C1A4B77A9D15E6AB4F7C2005 /* ClipboardWritebackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A4B77A9D15E6AB4F7C1005 /* ClipboardWritebackService.swift */; };
+		C1A4B77A9D15E6AB4F7C2001 /* ClipboardNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A4B77A9D15E6AB4F7C1001 /* ClipboardNormalizerTests.swift */; };
+		C1A4B77A9D15E6AB4F7C2002 /* ClipboardWritebackServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A4B77A9D15E6AB4F7C1002 /* ClipboardWritebackServiceTests.swift */; };
+		C1A4B77A9D15E6AB4F7C2006 /* ClipboardMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A4B77A9D15E6AB4F7C1006 /* ClipboardMonitorTests.swift */; };
+		C1A4B77A9D15E6AB4F7C2007 /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A4B77A9D15E6AB4F7C1007 /* ClipboardMonitor.swift */; };
+		CDAE8565039346878771424B /* ClipboardContentType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08883D08193C4E70925B9F5C /* ClipboardContentType.swift */; };
+		D276569A135C4C06A99586B5 /* ClipboardStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76D259071F84573892B8094 /* ClipboardStoreTests.swift */; };
+		DE3C1B58B9344D7AA7755D23 /* ClipboardItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D09816F24A640B9A8596687 /* ClipboardItemTests.swift */; };
+		F82D70F2AEFC499996E4FE1D /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71BDB9D553CF4FE48C129E53 /* ClipboardStore.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		39A8732F9C5EAEDE9BC9408E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 947E3F1D712569A8AFDDF4E5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A0FBC950F57D018BD15238CB;
+			remoteInfo = "V-Paste";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		08883D08193C4E70925B9F5C /* ClipboardContentType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardContentType.swift; sourceTree = "<group>"; };
+		3EF2308247E1BA81516E4220 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		45E77E5CE7CD4DA2A48313E0 /* SQLiteDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteDatabase.swift; sourceTree = "<group>"; };
+		71BDB9D553CF4FE48C129E53 /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
+		7AD562612AF37B01BAEE7003 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		8AC3E7BE437F4B6588E77F0B /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
+		8D09816F24A640B9A8596687 /* ClipboardItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItemTests.swift; sourceTree = "<group>"; };
+		921622200EDFF76293438E19 /* V-PasteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "V-PasteTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9F6A7B8C1D2E3F4000000001 /* HistoryPanelViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPanelViewModelTests.swift; sourceTree = "<group>"; };
+		9F6A7B8C1D2E3F4000000010 /* HistoryPanelViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPanelViewModel.swift; sourceTree = "<group>"; };
+		A60000000000000000000011 /* LinkMetadataFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkMetadataFetcher.swift; sourceTree = "<group>"; };
+		A70000000000000000000011 /* HistoryPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPanelController.swift; sourceTree = "<group>"; };
+		A70000000000000000000012 /* HistoryPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPanelView.swift; sourceTree = "<group>"; };
+		A70000000000000000000013 /* HistoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryCardView.swift; sourceTree = "<group>"; };
+		A80000000000000000000011 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		A80000000000000000000012 /* GlobalHotKeyMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyMonitor.swift; sourceTree = "<group>"; };
+		A80000000000000000000013 /* MenuBarMenuDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarMenuDescriptor.swift; sourceTree = "<group>"; };
+		A81000000000000000000011 /* SettingsTabDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTabDescriptor.swift; sourceTree = "<group>"; };
+		A81000000000000000000012 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A81000000000000000000013 /* SettingsPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPanelController.swift; sourceTree = "<group>"; };
+		A90000000000000000000011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AF13DF9BA5E93855BBD7457C /* VPasteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPasteApp.swift; sourceTree = "<group>"; };
+		B40000000000000000000001 /* ClipboardGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardGroup.swift; sourceTree = "<group>"; };
+		C1A4B77A9D15E6AB4F7C1001 /* ClipboardNormalizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardNormalizerTests.swift; sourceTree = "<group>"; };
+		C1A4B77A9D15E6AB4F7C1002 /* ClipboardWritebackServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardWritebackServiceTests.swift; sourceTree = "<group>"; };
+		C1A4B77A9D15E6AB4F7C1003 /* AssetCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetCache.swift; sourceTree = "<group>"; };
+		C1A4B77A9D15E6AB4F7C1004 /* ClipboardNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardNormalizer.swift; sourceTree = "<group>"; };
+		C1A4B77A9D15E6AB4F7C1005 /* ClipboardWritebackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardWritebackService.swift; sourceTree = "<group>"; };
+		C1A4B77A9D15E6AB4F7C1006 /* ClipboardMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitorTests.swift; sourceTree = "<group>"; };
+		C1A4B77A9D15E6AB4F7C1007 /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
+		C7EE701F4476F5496ECD4DAF /* AppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateTests.swift; sourceTree = "<group>"; };
+		DFBE9FB34DCC224B298BFB9D /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
+		E48C336F604851EE81816BDD /* V-Paste.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "V-Paste.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F76D259071F84573892B8094 /* ClipboardStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStoreTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		198B3FE41C3C6AE130DCB8EA /* App */ = {
+			isa = PBXGroup;
+			children = (
+				C7EE701F4476F5496ECD4DAF /* AppStateTests.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		1FC5F493733C1FAEAB70579D /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				08883D08193C4E70925B9F5C /* ClipboardContentType.swift */,
+				B40000000000000000000001 /* ClipboardGroup.swift */,
+				DFBE9FB34DCC224B298BFB9D /* ClipboardItem.swift */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		20DB3C2697154D0185C3C306 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				8D09816F24A640B9A8596687 /* ClipboardItemTests.swift */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		24DB5DD995A4A5198727EDE4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E48C336F604851EE81816BDD /* V-Paste.app */,
+				921622200EDFF76293438E19 /* V-PasteTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		34FEB101049E4B719E50DF05 /* Infrastructure */ = {
+			isa = PBXGroup;
+			children = (
+				F76D259071F84573892B8094 /* ClipboardStoreTests.swift */,
+				C1A4B77A9D15E6AB4F7C1001 /* ClipboardNormalizerTests.swift */,
+				C1A4B77A9D15E6AB4F7C1002 /* ClipboardWritebackServiceTests.swift */,
+				C1A4B77A9D15E6AB4F7C1006 /* ClipboardMonitorTests.swift */,
+			);
+			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		4A64B2EC87014D4FB1C31D83 /* Infrastructure */ = {
+			isa = PBXGroup;
+			children = (
+				C1A4B77A9D15E6AB4F7C3001 /* Clipboard */,
+				C183C681DB954454AA330331 /* Database */,
+				C1A4B77A9D15E6AB4F7C3002 /* Files */,
+				A80000000000000000000022 /* Hotkey */,
+			);
+			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		6F6A51554C87A357868BD959 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				7AD562612AF37B01BAEE7003 /* AppDelegate.swift */,
+				3EF2308247E1BA81516E4220 /* AppState.swift */,
+				AF13DF9BA5E93855BBD7457C /* VPasteApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		7363457D9A7040F7A842869B /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				8AC3E7BE437F4B6588E77F0B /* AppPaths.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		A28D7590F8538224441EA997 /* V-PasteTests */ = {
+			isa = PBXGroup;
+			children = (
+				198B3FE41C3C6AE130DCB8EA /* App */,
+				20DB3C2697154D0185C3C306 /* Domain */,
+				34FEB101049E4B719E50DF05 /* Infrastructure */,
+				9F6A7B8C1D2E3F4000000003 /* UI */,
+			);
+			path = "V-PasteTests";
+			sourceTree = "<group>";
+		};
+		BFBBF6E14C6330A9AD0E4070 /* V-Paste */ = {
+			isa = PBXGroup;
+			children = (
+				A90000000000000000000011 /* Assets.xcassets */,
+				6F6A51554C87A357868BD959 /* App */,
+				1FC5F493733C1FAEAB70579D /* Domain */,
+				4A64B2EC87014D4FB1C31D83 /* Infrastructure */,
+				7363457D9A7040F7A842869B /* Support */,
+				9F6A7B8C1D2E3F4000000012 /* UI */,
+			);
+			path = "V-Paste";
+			sourceTree = "<group>";
+		};
+		C183C681DB954454AA330331 /* Database */ = {
+			isa = PBXGroup;
+			children = (
+				71BDB9D553CF4FE48C129E53 /* ClipboardStore.swift */,
+				45E77E5CE7CD4DA2A48313E0 /* SQLiteDatabase.swift */,
+			);
+			path = Database;
+			sourceTree = "<group>";
+		};
+		C1A4B77A9D15E6AB4F7C3001 /* Clipboard */ = {
+			isa = PBXGroup;
+			children = (
+				C1A4B77A9D15E6AB4F7C1004 /* ClipboardNormalizer.swift */,
+				C1A4B77A9D15E6AB4F7C1005 /* ClipboardWritebackService.swift */,
+				C1A4B77A9D15E6AB4F7C1007 /* ClipboardMonitor.swift */,
+				A60000000000000000000011 /* LinkMetadataFetcher.swift */,
+			);
+			path = Clipboard;
+			sourceTree = "<group>";
+		};
+		C1A4B77A9D15E6AB4F7C3002 /* Files */ = {
+			isa = PBXGroup;
+			children = (
+				C1A4B77A9D15E6AB4F7C1003 /* AssetCache.swift */,
+			);
+			path = Files;
+			sourceTree = "<group>";
+		};
+		9F6A7B8C1D2E3F4000000003 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				9F6A7B8C1D2E3F4000000004 /* Panel */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		9F6A7B8C1D2E3F4000000004 /* Panel */ = {
+			isa = PBXGroup;
+			children = (
+				9F6A7B8C1D2E3F4000000001 /* HistoryPanelViewModelTests.swift */,
+			);
+			path = Panel;
+			sourceTree = "<group>";
+		};
+		9F6A7B8C1D2E3F4000000012 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				A80000000000000000000021 /* MenuBar */,
+				9F6A7B8C1D2E3F4000000013 /* Panel */,
+				A81000000000000000000021 /* Settings */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		A81000000000000000000021 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				A81000000000000000000011 /* SettingsTabDescriptor.swift */,
+				A81000000000000000000013 /* SettingsPanelController.swift */,
+				A81000000000000000000012 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		A80000000000000000000021 /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				A80000000000000000000013 /* MenuBarMenuDescriptor.swift */,
+				A80000000000000000000011 /* MenuBarController.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		A80000000000000000000022 /* Hotkey */ = {
+			isa = PBXGroup;
+			children = (
+				A80000000000000000000012 /* GlobalHotKeyMonitor.swift */,
+			);
+			path = Hotkey;
+			sourceTree = "<group>";
+		};
+		9F6A7B8C1D2E3F4000000013 /* Panel */ = {
+			isa = PBXGroup;
+			children = (
+				A70000000000000000000011 /* HistoryPanelController.swift */,
+				A70000000000000000000013 /* HistoryCardView.swift */,
+				A70000000000000000000012 /* HistoryPanelView.swift */,
+				9F6A7B8C1D2E3F4000000010 /* HistoryPanelViewModel.swift */,
+			);
+			path = Panel;
+			sourceTree = "<group>";
+		};
+		C9286045C2DD6FE30D49245C = {
+			isa = PBXGroup;
+			children = (
+				BFBBF6E14C6330A9AD0E4070 /* V-Paste */,
+				A28D7590F8538224441EA997 /* V-PasteTests */,
+				24DB5DD995A4A5198727EDE4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		55CF194C8C0D53FE9A4E72F6 /* V-PasteTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 76ECA58A030DEC4FA6DE0846 /* Build configuration list for PBXNativeTarget "V-PasteTests" */;
+			buildPhases = (
+				1B28F53182BD952FB61E84E0 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				36C57677746D117CC75A7522 /* PBXTargetDependency */,
+			);
+			name = "V-PasteTests";
+			packageProductDependencies = (
+			);
+			productName = "V-PasteTests";
+			productReference = 921622200EDFF76293438E19 /* V-PasteTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A0FBC950F57D018BD15238CB /* V-Paste */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E02F11F3F6890DDF920C5CD2 /* Build configuration list for PBXNativeTarget "V-Paste" */;
+			buildPhases = (
+				D73554E410367B9A36F5D293 /* Sources */,
+				A90000000000000000000021 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "V-Paste";
+			packageProductDependencies = (
+			);
+			productName = "V-Paste";
+			productReference = E48C336F604851EE81816BDD /* V-Paste.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		947E3F1D712569A8AFDDF4E5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 885A5805A655976B9EB25FF8 /* Build configuration list for PBXProject "V-Paste" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = C9286045C2DD6FE30D49245C;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 24DB5DD995A4A5198727EDE4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A0FBC950F57D018BD15238CB /* V-Paste */,
+				55CF194C8C0D53FE9A4E72F6 /* V-PasteTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A90000000000000000000021 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A90000000000000000000001 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1B28F53182BD952FB61E84E0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B6681894BFA4BFE324D77157 /* AppStateTests.swift in Sources */,
+				DE3C1B58B9344D7AA7755D23 /* ClipboardItemTests.swift in Sources */,
+				D276569A135C4C06A99586B5 /* ClipboardStoreTests.swift in Sources */,
+				C1A4B77A9D15E6AB4F7C2001 /* ClipboardNormalizerTests.swift in Sources */,
+				C1A4B77A9D15E6AB4F7C2002 /* ClipboardWritebackServiceTests.swift in Sources */,
+				C1A4B77A9D15E6AB4F7C2006 /* ClipboardMonitorTests.swift in Sources */,
+				9F6A7B8C1D2E3F4000000002 /* HistoryPanelViewModelTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D73554E410367B9A36F5D293 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				29DB8AFA40194E3266EACE34 /* AppDelegate.swift in Sources */,
+				57CC7ED16C1997BA0AB86599 /* AppState.swift in Sources */,
+				6666C37A22444A47BFE705AD /* AppPaths.swift in Sources */,
+				F82D70F2AEFC499996E4FE1D /* ClipboardStore.swift in Sources */,
+				CDAE8565039346878771424B /* ClipboardContentType.swift in Sources */,
+				B40000000000000000000002 /* ClipboardGroup.swift in Sources */,
+				C1A4B77A9D15E6AB4F7C2003 /* AssetCache.swift in Sources */,
+				C1A4B77A9D15E6AB4F7C2004 /* ClipboardNormalizer.swift in Sources */,
+				C1A4B77A9D15E6AB4F7C2005 /* ClipboardWritebackService.swift in Sources */,
+				C1A4B77A9D15E6AB4F7C2007 /* ClipboardMonitor.swift in Sources */,
+				A60000000000000000000001 /* LinkMetadataFetcher.swift in Sources */,
+				A80000000000000000000002 /* GlobalHotKeyMonitor.swift in Sources */,
+				4756D7E8FA57407DA2528585 /* SQLiteDatabase.swift in Sources */,
+				BAB5AC595C671D49D57D5F9C /* ClipboardItem.swift in Sources */,
+				A70000000000000000000001 /* HistoryPanelController.swift in Sources */,
+				A80000000000000000000001 /* MenuBarController.swift in Sources */,
+				A80000000000000000000003 /* MenuBarMenuDescriptor.swift in Sources */,
+				A81000000000000000000001 /* SettingsTabDescriptor.swift in Sources */,
+				A81000000000000000000003 /* SettingsPanelController.swift in Sources */,
+				A81000000000000000000002 /* SettingsView.swift in Sources */,
+				A70000000000000000000003 /* HistoryCardView.swift in Sources */,
+				A70000000000000000000002 /* HistoryPanelView.swift in Sources */,
+				9F6A7B8C1D2E3F4000000011 /* HistoryPanelViewModel.swift in Sources */,
+				7F7FFD2FD08BEC7653F2026E /* VPasteApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		36C57677746D117CC75A7522 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A0FBC950F57D018BD15238CB /* V-Paste */;
+			targetProxy = 39A8732F9C5EAEDE9BC9408E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		017CCAC7E65906E1FC92BD8D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.vpaste.app.tests;
+				PRODUCT_MODULE_NAME = V_PasteTests;
+				PRODUCT_NAME = "V-PasteTests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/V-Paste.app/Contents/MacOS/V-Paste";
+			};
+			name = Release;
+		};
+		33DE861DED390410E9FA5516 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = io.vpaste.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		36176621D059EF4CC16CC2C2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_MODULE_NAME = V_Paste;
+				PRODUCT_NAME = "V-Paste";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		8252040E1BFFF93E33F63DA8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_MODULE_NAME = V_Paste;
+				PRODUCT_NAME = "V-Paste";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		ACE3EE21C20FA0309354858E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.vpaste.app.tests;
+				PRODUCT_MODULE_NAME = V_PasteTests;
+				PRODUCT_NAME = "V-PasteTests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/V-Paste.app/Contents/MacOS/V-Paste";
+			};
+			name = Debug;
+		};
+		DE3E6C89D3C5F6C79022ED71 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = io.vpaste.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		76ECA58A030DEC4FA6DE0846 /* Build configuration list for PBXNativeTarget "V-PasteTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ACE3EE21C20FA0309354858E /* Debug */,
+				017CCAC7E65906E1FC92BD8D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		885A5805A655976B9EB25FF8 /* Build configuration list for PBXProject "V-Paste" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				33DE861DED390410E9FA5516 /* Debug */,
+				DE3E6C89D3C5F6C79022ED71 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E02F11F3F6890DDF920C5CD2 /* Build configuration list for PBXNativeTarget "V-Paste" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				36176621D059EF4CC16CC2C2 /* Debug */,
+				8252040E1BFFF93E33F63DA8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 947E3F1D712569A8AFDDF4E5 /* Project object */;
+}
