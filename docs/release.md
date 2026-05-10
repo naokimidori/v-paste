@@ -13,7 +13,7 @@ Start with source releases if Developer ID signing and notarization are not read
 
 ## Versioning
 
-The open-source baseline starts at `0.1.0` with build `1`.
+The open-source baseline starts at `1.0.0` with build `1`.
 
 Before each release, update the app target build settings in `V-Paste.xcodeproj`:
 
@@ -84,6 +84,6 @@ xcrun notarytool store-credentials vpaste-notary-profile \
 7. Attach notarized binary artifacts only if Gatekeeper validation passes.
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v1.0.0
+git push origin v1.0.0
 ```

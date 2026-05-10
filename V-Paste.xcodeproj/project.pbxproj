@@ -523,7 +523,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_MODULE_NAME = V_Paste;
 				PRODUCT_NAME = "V-Paste";
 				SDKROOT = macosx;
@@ -543,7 +543,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_MODULE_NAME = V_Paste;
 				PRODUCT_NAME = "V-Paste";
 				SDKROOT = macosx;

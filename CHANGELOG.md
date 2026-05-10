@@ -4,7 +4,7 @@ All notable changes to V-Paste will be documented in this file.
 
 The project follows semantic versioning once public releases begin.
 
-## [0.1.0] - 2026-05-06
+## [1.0.0] - 2026-05-06
 
 ### Added
 
