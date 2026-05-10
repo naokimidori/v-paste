@@ -54,6 +54,34 @@ enum HistoryPanelKeyEventRouting {
     static func shouldBypassPanelHandling(firstResponder: NSResponder?) -> Bool {
         firstResponder is NSTextView || firstResponder is NSTextField
     }
+
+    static func isPanelCopyCommand(
+        charactersIgnoringModifiers: String?,
+        modifierFlags: NSEvent.ModifierFlags
+    ) -> Bool {
+        let meaningfulModifiers = modifierFlags.intersection([.command, .option, .control])
+
+        return meaningfulModifiers == .command
+            && charactersIgnoringModifiers?.lowercased() == "c"
+    }
+
+    static func shouldHandleSearchCopyShortcut(
+        firstResponder: NSResponder?,
+        charactersIgnoringModifiers: String?,
+        modifierFlags: NSEvent.ModifierFlags,
+        isSearchExpanded: Bool
+    ) -> Bool {
+        guard isSearchExpanded,
+              shouldBypassPanelHandling(firstResponder: firstResponder)
+        else {
+            return false
+        }
+
+        return isPanelCopyCommand(
+            charactersIgnoringModifiers: charactersIgnoringModifiers,
+            modifierFlags: modifierFlags
+        )
+    }
 }
 
 enum HistoryPanelLayout {
@@ -369,6 +397,16 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
 
         switch event.type {
         case .keyDown:
+            if HistoryPanelKeyEventRouting.shouldHandleSearchCopyShortcut(
+                firstResponder: panel?.firstResponder,
+                charactersIgnoringModifiers: event.charactersIgnoringModifiers,
+                modifierFlags: event.modifierFlags,
+                isSearchExpanded: appState.panelViewModel.isSearchExpanded
+            ) {
+                copySelectedItem()
+                return nil
+            }
+
             guard !HistoryPanelKeyEventRouting.shouldBypassPanelHandling(
                 firstResponder: panel?.firstResponder
             ) else {
@@ -392,12 +430,15 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
     }
 
     private func handleKeyDown(_ event: NSEvent) -> NSEvent? {
-        let meaningfulModifiers = event.modifierFlags.intersection([.command, .option, .control])
-
-        if meaningfulModifiers == .command, event.charactersIgnoringModifiers?.lowercased() == "c" {
+        if HistoryPanelKeyEventRouting.isPanelCopyCommand(
+            charactersIgnoringModifiers: event.charactersIgnoringModifiers,
+            modifierFlags: event.modifierFlags
+        ) {
             copySelectedItem()
             return nil
         }
+
+        let meaningfulModifiers = event.modifierFlags.intersection([.command, .option, .control])
 
         guard meaningfulModifiers.isEmpty else { return event }
 

@@ -28,6 +28,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         onSetMonitoringEnabled: { [weak self] isEnabled in
             self?.setMonitoringEnabled(isEnabled)
         },
+        currentLanguage: { [weak self] in
+            self?.preferences.language ?? .english
+        },
+        onSetLanguage: { [weak self] language in
+            self?.setLanguage(language)
+        },
         currentHotKey: { [weak self] in
             self?.preferences.showPanelHotKey ?? .defaultShowPanel
         },
@@ -40,6 +46,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         onSetRetentionPolicy: { [weak self] policy in
             self?.setClipboardRetentionPolicy(policy)
         },
+        currentIgnoredApplications: { [weak self] in
+            self?.preferences.ignoredApplications ?? IgnoredApplicationRule.defaultRules
+        },
+        isApplicationIgnoreEnabled: { [weak self] in
+            self?.preferences.isApplicationIgnoreEnabled ?? true
+        },
+        onSetApplicationIgnoreEnabled: { [weak self] isEnabled in
+            self?.setApplicationIgnoreEnabled(isEnabled)
+        },
+        onSetIgnoredApplications: { [weak self] rules in
+            self?.setIgnoredApplications(rules)
+        },
         onClearHistory: { [weak self] in
             self?.clearHistoryFromSettings()
         }
@@ -48,6 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        appState.setLanguage(preferences.language)
         configureServices()
     }
 
@@ -107,7 +126,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let normalizer = ClipboardNormalizer(assetCache: assetCache)
             let monitor = ClipboardMonitor(
                 pasteboard: .general,
-                now: Date.init
+                now: Date.init,
+                isSourceApplicationIgnored: { [weak self] sourceApplication in
+                    self?.isSourceApplicationIgnored(sourceApplication) ?? false
+                }
             ) { pasteboard, copiedAt, sourceApplication in
                 try normalizer.normalize(
                     pasteboard: pasteboard,
@@ -144,6 +166,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         menuBarController.rebuildMenu(
             isMonitoringPaused: appState.isMonitoringPaused,
+            language: preferences.language,
             shortcut: preferences.showPanelHotKey
         )
         self.menuBarController = menuBarController
@@ -272,6 +295,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         menuBarController?.rebuildMenu(
             isMonitoringPaused: appState.isMonitoringPaused,
+            language: preferences.language,
             shortcut: preferences.showPanelHotKey
         )
     }
@@ -288,6 +312,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         preferences.showPanelHotKey
     }
 
+    func currentLanguage() -> AppLanguage {
+        preferences.language
+    }
+
+    func setLanguage(_ language: AppLanguage) {
+        preferences.language = language
+        appState.setLanguage(language)
+        menuBarController?.rebuildMenu(
+            isMonitoringPaused: appState.isMonitoringPaused,
+            language: language,
+            shortcut: preferences.showPanelHotKey
+        )
+    }
+
     func setShowPanelHotKey(_ hotKey: HotKeyPreference) throws -> HotKeyPreference {
         let previousHotKey = preferences.showPanelHotKey
         let monitor = hotKeyMonitor ?? makeHotKeyMonitor()
@@ -298,6 +336,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             preferences.showPanelHotKey = hotKey
             menuBarController?.rebuildMenu(
                 isMonitoringPaused: appState.isMonitoringPaused,
+                language: preferences.language,
                 shortcut: hotKey
             )
             return hotKey
@@ -309,6 +348,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func currentClipboardRetentionPolicy() -> ClipboardRetentionPolicy {
         preferences.clipboardRetentionPolicy
+    }
+
+    func currentIgnoredApplications() -> [IgnoredApplicationRule] {
+        preferences.ignoredApplications
+    }
+
+    func isApplicationIgnoreEnabled() -> Bool {
+        preferences.isApplicationIgnoreEnabled
+    }
+
+    func setApplicationIgnoreEnabled(_ isEnabled: Bool) {
+        preferences.isApplicationIgnoreEnabled = isEnabled
+    }
+
+    func setIgnoredApplications(_ rules: [IgnoredApplicationRule]) {
+        preferences.ignoredApplications = rules
+    }
+
+    private func isSourceApplicationIgnored(_ sourceApplication: ClipboardSourceApplication?) -> Bool {
+        IgnoredApplicationRule.isIgnored(
+            sourceApplication,
+            rules: preferences.ignoredApplications,
+            isEnabled: preferences.isApplicationIgnoreEnabled
+        )
     }
 
     func setClipboardRetentionPolicy(_ policy: ClipboardRetentionPolicy) {
@@ -390,7 +453,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 usedColorHexes: appState.groups.map(\.colorHex)
             )
             let group = try store.createGroup(
-                name: ClipboardGroup.defaultName,
+                name: ClipboardGroup.defaultName(language: preferences.language),
                 colorHex: colorHex
             )
             appState.loadGroups(try store.fetchGroups())

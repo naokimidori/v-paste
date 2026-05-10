@@ -12,6 +12,7 @@ final class HistoryPanelViewModel: ObservableObject {
     @Published private(set) var activeGroupID: ClipboardGroup.ID?
     @Published private(set) var isSearchExpanded: Bool
     @Published private(set) var searchFocusRequestID: Int
+    @Published private(set) var language: AppLanguage
 
     var selectedItem: ClipboardItem? {
         guard filteredItems.indices.contains(selectedIndex) else { return nil }
@@ -22,7 +23,8 @@ final class HistoryPanelViewModel: ObservableObject {
     init(
         items: [ClipboardItem],
         groups: [ClipboardGroup] = [],
-        activeGroupID: ClipboardGroup.ID? = nil
+        activeGroupID: ClipboardGroup.ID? = nil,
+        language: AppLanguage = .english
     ) {
         allItems = items
         filteredItems = []
@@ -33,7 +35,14 @@ final class HistoryPanelViewModel: ObservableObject {
         self.activeGroupID = activeGroupID
         isSearchExpanded = false
         searchFocusRequestID = 0
+        self.language = language
         applyFilter(resetSelection: true)
+    }
+
+    func setLanguage(_ language: AppLanguage) {
+        guard self.language != language else { return }
+
+        self.language = language
     }
 
     func updateSearchText(_ text: String) {

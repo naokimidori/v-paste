@@ -15,6 +15,10 @@ struct VPasteApp: App {
                 onSetMonitoringEnabled: { isEnabled in
                     appDelegate.setMonitoringEnabled(isEnabled)
                 },
+                language: appDelegate.currentLanguage(),
+                onSetLanguage: { language in
+                    appDelegate.setLanguage(language)
+                },
                 hotKey: appDelegate.currentShowPanelHotKey(),
                 onSetHotKey: { hotKey in
                     try appDelegate.setShowPanelHotKey(hotKey)
@@ -22,6 +26,14 @@ struct VPasteApp: App {
                 retentionPolicy: appDelegate.currentClipboardRetentionPolicy(),
                 onSetRetentionPolicy: { policy in
                     appDelegate.setClipboardRetentionPolicy(policy)
+                },
+                ignoredApplications: appDelegate.currentIgnoredApplications(),
+                isApplicationIgnoreEnabled: appDelegate.isApplicationIgnoreEnabled(),
+                onSetApplicationIgnoreEnabled: { isEnabled in
+                    appDelegate.setApplicationIgnoreEnabled(isEnabled)
+                },
+                onSetIgnoredApplications: { rules in
+                    appDelegate.setIgnoredApplications(rules)
                 },
                 onClearHistory: {
                     appDelegate.clearHistoryFromSettings()

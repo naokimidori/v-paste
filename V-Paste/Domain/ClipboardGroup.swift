@@ -1,7 +1,8 @@
 import Foundation
 
 struct ClipboardGroup: Identifiable, Equatable {
-    static let defaultName = "Untitled"
+    private static let englishDefaultName = "Untitled"
+    private static let simplifiedChineseDefaultName = "未命名"
     static let defaultColorHex = "#FF5B57"
 
     let id: UUID
@@ -24,9 +25,16 @@ struct ClipboardGroup: Identifiable, Equatable {
         self.sortOrder = sortOrder
     }
 
-    static func defaultGroup(createdAt: Date = Date()) -> ClipboardGroup {
+    static func defaultName(language: AppLanguage) -> String {
+        language == .english ? englishDefaultName : simplifiedChineseDefaultName
+    }
+
+    static func defaultGroup(
+        createdAt: Date = Date(),
+        language: AppLanguage = .english
+    ) -> ClipboardGroup {
         ClipboardGroup(
-            name: defaultName,
+            name: defaultName(language: language),
             colorHex: defaultColorHex,
             createdAt: createdAt,
             sortOrder: 0

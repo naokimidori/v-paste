@@ -7,6 +7,7 @@ final class ClipboardMonitor {
     private let pasteboard: NSPasteboard
     private let now: () -> Date
     private let sourceApplication: () -> ClipboardSourceApplication?
+    private let isSourceApplicationIgnored: (ClipboardSourceApplication?) -> Bool
     private let normalize: (NSPasteboard, Date, ClipboardSourceApplication?) throws -> ClipboardItem?
     private var timer: Timer?
     private var lastChangeCount: Int
@@ -19,12 +20,14 @@ final class ClipboardMonitor {
         pasteboard: NSPasteboard,
         now: @escaping () -> Date,
         sourceApplication: @escaping () -> ClipboardSourceApplication? = ClipboardSourceApplication.frontmost,
+        isSourceApplicationIgnored: @escaping (ClipboardSourceApplication?) -> Bool = { _ in false },
         normalize: @escaping (NSPasteboard, Date, ClipboardSourceApplication?) throws -> ClipboardItem?
     ) {
         self.pollInterval = pollInterval
         self.pasteboard = pasteboard
         self.now = now
         self.sourceApplication = sourceApplication
+        self.isSourceApplicationIgnored = isSourceApplicationIgnored
         self.normalize = normalize
         self.lastChangeCount = pasteboard.changeCount
     }
@@ -39,7 +42,8 @@ final class ClipboardMonitor {
             pollInterval: pollInterval,
             pasteboard: pasteboard,
             now: now,
-            sourceApplication: ClipboardSourceApplication.frontmost
+            sourceApplication: ClipboardSourceApplication.frontmost,
+            isSourceApplicationIgnored: { _ in false }
         ) { pasteboard, copiedAt, _ in
             try normalize(pasteboard, copiedAt)
         }
@@ -70,7 +74,14 @@ final class ClipboardMonitor {
         guard changeCount != lastChangeCount else { return }
 
         do {
-            if let item = try normalize(pasteboard, now(), sourceApplication()) {
+            let sourceApplication = sourceApplication()
+
+            if isSourceApplicationIgnored(sourceApplication) {
+                lastChangeCount = changeCount
+                return
+            }
+
+            if let item = try normalize(pasteboard, now(), sourceApplication) {
                 lastChangeCount = changeCount
                 onItem?(item)
             } else {

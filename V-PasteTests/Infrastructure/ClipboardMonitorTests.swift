@@ -128,4 +128,41 @@ final class ClipboardMonitorTests: XCTestCase {
 
         XCTAssertEqual(capturedSourceApplication, sourceApplication)
     }
+
+    func testMonitorSuppressesIgnoredSourceApplicationAndAdvancesChangeCount() {
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("test-monitor-ignored-\(UUID().uuidString)"))
+        pasteboard.clearContents()
+        let changedCount = pasteboard.changeCount + 1
+        let sourceApplication = ClipboardSourceApplication(
+            name: "Keychain Access",
+            bundleIdentifier: "com.apple.keychainaccess"
+        )
+        var normalizeCallCount = 0
+        let monitor = ClipboardMonitor(
+            pollInterval: 0.01,
+            pasteboard: pasteboard,
+            now: { Date(timeIntervalSince1970: 1) },
+            sourceApplication: { sourceApplication },
+            isSourceApplicationIgnored: { application in
+                IgnoredApplicationRule.defaultRules.contains { rule in
+                    rule.matches(application)
+                }
+            },
+            normalize: { _, _, _ in
+                normalizeCallCount += 1
+                return .text(
+                    plainText: "secret",
+                    copiedAt: Date(timeIntervalSince1970: 1)
+                )
+            }
+        )
+        var received: [ClipboardItem] = []
+        monitor.onItem = { received.append($0) }
+
+        monitor.process(changeCount: changedCount)
+        monitor.process(changeCount: changedCount)
+
+        XCTAssertEqual(normalizeCallCount, 0)
+        XCTAssertTrue(received.isEmpty)
+    }
 }

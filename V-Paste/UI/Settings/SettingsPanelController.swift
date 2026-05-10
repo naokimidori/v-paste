@@ -2,8 +2,15 @@ import AppKit
 import SwiftUI
 
 enum SettingsPanelDescriptor {
-    static let title = "偏好设置"
-    static let contentSize = CGSize(width: 520, height: 300)
+    static func title(language: AppLanguage) -> String {
+        language == .english ? "Preferences" : "偏好设置"
+    }
+
+    static var title: String {
+        title(language: .english)
+    }
+
+    static let contentSize = CGSize(width: 580, height: 380)
 }
 
 enum SettingsPanelPlacement {
@@ -29,10 +36,16 @@ final class SettingsPanelController: NSObject, NSWindowDelegate {
     private let isLaunchAtLoginEnabled: () -> Bool
     private let onSetLaunchAtLogin: (Bool) throws -> Bool
     private let onSetMonitoringEnabled: (Bool) -> Void
+    private let currentLanguage: () -> AppLanguage
+    private let onSetLanguage: (AppLanguage) -> Void
     private let currentHotKey: () -> HotKeyPreference
     private let onSetHotKey: (HotKeyPreference) throws -> HotKeyPreference
     private let currentRetentionPolicy: () -> ClipboardRetentionPolicy
     private let onSetRetentionPolicy: (ClipboardRetentionPolicy) -> Void
+    private let currentIgnoredApplications: () -> [IgnoredApplicationRule]
+    private let isApplicationIgnoreEnabled: () -> Bool
+    private let onSetApplicationIgnoreEnabled: (Bool) -> Void
+    private let onSetIgnoredApplications: ([IgnoredApplicationRule]) -> Void
     private let onClearHistory: () -> Void
     private var panel: NSPanel?
     private var hostingController: NSHostingController<SettingsView>?
@@ -42,20 +55,32 @@ final class SettingsPanelController: NSObject, NSWindowDelegate {
         isLaunchAtLoginEnabled: @escaping () -> Bool,
         onSetLaunchAtLogin: @escaping (Bool) throws -> Bool,
         onSetMonitoringEnabled: @escaping (Bool) -> Void,
+        currentLanguage: @escaping () -> AppLanguage,
+        onSetLanguage: @escaping (AppLanguage) -> Void,
         currentHotKey: @escaping () -> HotKeyPreference,
         onSetHotKey: @escaping (HotKeyPreference) throws -> HotKeyPreference,
         currentRetentionPolicy: @escaping () -> ClipboardRetentionPolicy,
         onSetRetentionPolicy: @escaping (ClipboardRetentionPolicy) -> Void,
+        currentIgnoredApplications: @escaping () -> [IgnoredApplicationRule],
+        isApplicationIgnoreEnabled: @escaping () -> Bool,
+        onSetApplicationIgnoreEnabled: @escaping (Bool) -> Void,
+        onSetIgnoredApplications: @escaping ([IgnoredApplicationRule]) -> Void,
         onClearHistory: @escaping () -> Void
     ) {
         self.appState = appState
         self.isLaunchAtLoginEnabled = isLaunchAtLoginEnabled
         self.onSetLaunchAtLogin = onSetLaunchAtLogin
         self.onSetMonitoringEnabled = onSetMonitoringEnabled
+        self.currentLanguage = currentLanguage
+        self.onSetLanguage = onSetLanguage
         self.currentHotKey = currentHotKey
         self.onSetHotKey = onSetHotKey
         self.currentRetentionPolicy = currentRetentionPolicy
         self.onSetRetentionPolicy = onSetRetentionPolicy
+        self.currentIgnoredApplications = currentIgnoredApplications
+        self.isApplicationIgnoreEnabled = isApplicationIgnoreEnabled
+        self.onSetApplicationIgnoreEnabled = onSetApplicationIgnoreEnabled
+        self.onSetIgnoredApplications = onSetIgnoredApplications
         self.onClearHistory = onClearHistory
         super.init()
     }
@@ -64,6 +89,7 @@ final class SettingsPanelController: NSObject, NSWindowDelegate {
         let panel = makePanelIfNeeded()
 
         hostingController?.rootView = makeSettingsView()
+        panel.title = SettingsPanelDescriptor.title(language: currentLanguage())
         centerPanelOnCurrentScreen(panel)
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -107,7 +133,7 @@ final class SettingsPanelController: NSObject, NSWindowDelegate {
         let view = makeSettingsView()
         let hostingController = NSHostingController(rootView: view)
 
-        panel.title = SettingsPanelDescriptor.title
+        panel.title = SettingsPanelDescriptor.title(language: currentLanguage())
         panel.contentViewController = hostingController
         panel.isReleasedWhenClosed = false
         panel.isMovableByWindowBackground = true
@@ -125,10 +151,19 @@ final class SettingsPanelController: NSObject, NSWindowDelegate {
             isLaunchAtLoginEnabled: isLaunchAtLoginEnabled(),
             onSetLaunchAtLogin: onSetLaunchAtLogin,
             onSetMonitoringEnabled: onSetMonitoringEnabled,
+            language: currentLanguage(),
+            onSetLanguage: { [weak self] language in
+                self?.onSetLanguage(language)
+                self?.panel?.title = SettingsPanelDescriptor.title(language: language)
+            },
             hotKey: currentHotKey(),
             onSetHotKey: onSetHotKey,
             retentionPolicy: currentRetentionPolicy(),
             onSetRetentionPolicy: onSetRetentionPolicy,
+            ignoredApplications: currentIgnoredApplications(),
+            isApplicationIgnoreEnabled: isApplicationIgnoreEnabled(),
+            onSetApplicationIgnoreEnabled: onSetApplicationIgnoreEnabled,
+            onSetIgnoredApplications: onSetIgnoredApplications,
             onClearHistory: onClearHistory
         )
     }

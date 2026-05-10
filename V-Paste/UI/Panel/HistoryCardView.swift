@@ -213,6 +213,111 @@ enum HistoryImageFooter {
     }
 }
 
+enum HistoryCardTypeLabel {
+    static func title(
+        for contentType: ClipboardContentType,
+        urlString: String?,
+        language: AppLanguage
+    ) -> String {
+        if HistoryLinkPreview.isWebURL(urlString) {
+            return language == .english ? "Link" : "链接"
+        }
+
+        switch contentType {
+        case .text:
+            return language == .english ? "Text" : "文本"
+        case .image:
+            return language == .english ? "Image" : "图片"
+        case .file:
+            return language == .english ? "File" : "文件"
+        case .mixed:
+            return language == .english ? "Mixed" : "混合"
+        }
+    }
+}
+
+enum HistoryCardRelativeAgeLabel {
+    static func label(
+        copiedAt: Date,
+        now: Date = Date(),
+        language: AppLanguage
+    ) -> String {
+        let elapsed = max(0, Int(now.timeIntervalSince(copiedAt)))
+
+        if elapsed < 60 {
+            return language == .english ? "just now" : "刚刚"
+        }
+
+        let minutes = elapsed / 60
+        if minutes < 60 {
+            return language == .english ? "\(minutes) min ago" : "\(minutes) 分钟前"
+        }
+
+        let hours = minutes / 60
+        if hours < 24 {
+            return language == .english ? "\(hours) hr ago" : "\(hours) 小时前"
+        }
+
+        let days = hours / 24
+        if days < 7 {
+            return language == .english ? "\(days) d ago" : "\(days) 天前"
+        }
+
+        return dateFormatter.string(from: copiedAt)
+    }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .none
+        return formatter
+    }()
+}
+
+enum HistoryCardCharacterCountLabel {
+    static func label(count: Int, language: AppLanguage) -> String {
+        language == .english ? "\(count) chars" : "\(count) 字符"
+    }
+}
+
+enum HistoryCardActionCopy {
+    static func selectedValue(isSelected: Bool, language: AppLanguage) -> String {
+        if isSelected {
+            return language == .english ? "Selected" : "已选中"
+        }
+
+        return language == .english ? "Not selected" : "未选中"
+    }
+
+    static func hint(language: AppLanguage) -> String {
+        language == .english ? "Selects or copies this clipboard item" : "选择或复制这条剪贴板内容"
+    }
+
+    static func selectTitle(language: AppLanguage) -> String {
+        language == .english ? "Select" : "选择"
+    }
+
+    static func copyTitle(language: AppLanguage) -> String {
+        language == .english ? "Copy" : "复制"
+    }
+
+    static func addToGroupTitle(language: AppLanguage) -> String {
+        language == .english ? "Add to Group" : "添加到分组"
+    }
+
+    static func deleteTitle(language: AppLanguage) -> String {
+        language == .english ? "Delete" : "删除"
+    }
+
+    static func addFavoriteTitle(language: AppLanguage) -> String {
+        language == .english ? "Add Favorite" : "收藏"
+    }
+
+    static func removeFavoriteTitle(language: AppLanguage) -> String {
+        language == .english ? "Remove Favorite" : "取消收藏"
+    }
+}
+
 enum HistoryFilePreviewLayout {
     static let thumbnailSize = CGSize(width: 190, height: 128)
     static let fallbackIconSize: CGFloat = 72
@@ -361,6 +466,7 @@ struct HistoryCardView: View {
     let item: ClipboardItem
     let isSelected: Bool
     let groups: [ClipboardGroup]
+    let language: AppLanguage
     let onSelect: () -> Void
     let onCopy: () -> Void
     let onToggleFavorite: () -> Void
@@ -398,13 +504,13 @@ struct HistoryCardView: View {
         .animation(.easeOut(duration: 0.12), value: isHovering)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
-        .accessibilityValue(isSelected ? "Selected" : "Not selected")
-        .accessibilityHint("Selects or copies this clipboard item")
+        .accessibilityValue(HistoryCardActionCopy.selectedValue(isSelected: isSelected, language: language))
+        .accessibilityHint(HistoryCardActionCopy.hint(language: language))
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
-        .accessibilityAction(named: "Select", onSelect)
-        .accessibilityAction(named: "Copy", onCopy)
+        .accessibilityAction(named: HistoryCardActionCopy.selectTitle(language: language), onSelect)
+        .accessibilityAction(named: HistoryCardActionCopy.copyTitle(language: language), onCopy)
         .contextMenu {
-            Menu("Add to Group") {
+            Menu(HistoryCardActionCopy.addToGroupTitle(language: language)) {
                 ForEach(groups) { group in
                     Button(group.name) {
                         onAssignToGroup(group.id)
@@ -414,7 +520,7 @@ struct HistoryCardView: View {
 
             Divider()
 
-            Button("Delete", role: .destructive, action: onDelete)
+            Button(HistoryCardActionCopy.deleteTitle(language: language), role: .destructive, action: onDelete)
         }
         .onDrag {
             NSItemProvider(object: item.id.uuidString as NSString)
@@ -447,7 +553,11 @@ struct HistoryCardView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(item.isFavorited ? "Remove Favorite" : "Add Favorite")
+            .accessibilityLabel(
+                item.isFavorited
+                    ? HistoryCardActionCopy.removeFavoriteTitle(language: language)
+                    : HistoryCardActionCopy.addFavoriteTitle(language: language)
+            )
 
             headerPreview
                 .frame(width: 58, height: HistoryCardLayout.headerHeight)
@@ -550,7 +660,14 @@ struct HistoryCardView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } else {
-                    placeholderPreview(systemName: "photo", title: "Image")
+                    placeholderPreview(
+                        systemName: "photo",
+                        title: HistoryCardTypeLabel.title(
+                            for: .image,
+                            urlString: nil,
+                            language: language
+                        )
+                    )
                 }
             }
             .frame(maxWidth: .infinity)
@@ -733,20 +850,11 @@ struct HistoryCardView: View {
     }
 
     private var typeLabel: String {
-        if HistoryLinkPreview.isWebURL(item.urlString) {
-            return "Link"
-        }
-
-        switch item.contentType {
-        case .text:
-            return "Text"
-        case .image:
-            return "Image"
-        case .file:
-            return "File"
-        case .mixed:
-            return "Mixed"
-        }
+        HistoryCardTypeLabel.title(
+            for: item.contentType,
+            urlString: item.urlString,
+            language: language
+        )
     }
 
     private var typeIcon: String {
@@ -757,28 +865,10 @@ struct HistoryCardView: View {
     }
 
     private var relativeAgeLabel: String {
-        let elapsed = max(0, Int(Date().timeIntervalSince(item.lastCopiedAt)))
-
-        if elapsed < 60 {
-            return "just now"
-        }
-
-        let minutes = elapsed / 60
-        if minutes < 60 {
-            return "\(minutes) min ago"
-        }
-
-        let hours = minutes / 60
-        if hours < 24 {
-            return "\(hours) hr ago"
-        }
-
-        let days = hours / 24
-        if days < 7 {
-            return "\(days) d ago"
-        }
-
-        return Self.dateFormatter.string(from: item.lastCopiedAt)
+        HistoryCardRelativeAgeLabel.label(
+            copiedAt: item.lastCopiedAt,
+            language: language
+        )
     }
 
     private var characterCountLabel: String {
@@ -786,7 +876,10 @@ struct HistoryCardView: View {
             return secondaryLabel
         }
 
-        return "\(plainText.count) chars"
+        return HistoryCardCharacterCountLabel.label(
+            count: plainText.count,
+            language: language
+        )
     }
 
     private var sourceAppLabel: String {
@@ -810,7 +903,11 @@ struct HistoryCardView: View {
             return ByteCountFormatter.string(fromByteCount: Int64(contentSize), countStyle: .file)
         }
 
-        return item.contentType.rawValue.capitalized
+        return HistoryCardTypeLabel.title(
+            for: item.contentType,
+            urlString: item.urlString,
+            language: language
+        )
     }
 
     private var imageFooterLabel: String {
@@ -888,12 +985,6 @@ struct HistoryCardView: View {
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .none
-        return formatter
-    }()
 }
 
 private struct DecorativeGrid: Shape {

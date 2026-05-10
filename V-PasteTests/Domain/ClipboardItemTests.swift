@@ -74,6 +74,11 @@ final class ClipboardItemTests: XCTestCase {
         XCTAssertEqual(group.sortOrder, 0)
     }
 
+    func testClipboardGroupDefaultNameUsesRequestedLanguage() {
+        XCTAssertEqual(ClipboardGroup.defaultName(language: .english), "Untitled")
+        XCTAssertEqual(ClipboardGroup.defaultName(language: .simplifiedChinese), "未命名")
+    }
+
     func testClipboardGroupColorPaletteHasSevenColorsAndPicksFirstUnusedColor() {
         XCTAssertEqual(ClipboardGroupColorPalette.hexValues.count, 7)
         XCTAssertEqual(

@@ -1,5 +1,21 @@
 import Foundation
 
+enum AppLanguage: String, CaseIterable, Codable, Identifiable {
+    case english = "en"
+    case simplifiedChinese = "zh-Hans"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .english:
+            return "English"
+        case .simplifiedChinese:
+            return "简体中文"
+        }
+    }
+}
+
 enum ClipboardRetentionPolicy: String, CaseIterable, Identifiable {
     case sevenDays = "sevenDays"
     case thirtyDays = "thirtyDays"
@@ -8,13 +24,17 @@ enum ClipboardRetentionPolicy: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     var title: String {
+        title(language: .english)
+    }
+
+    func title(language: AppLanguage) -> String {
         switch self {
         case .sevenDays:
-            return "7 天"
+            return language == .english ? "7 days" : "7 天"
         case .thirtyDays:
-            return "30 天"
+            return language == .english ? "30 days" : "30 天"
         case .unlimited:
-            return "不限制"
+            return language == .english ? "Unlimited" : "不限制"
         }
     }
 
@@ -42,14 +62,32 @@ enum ClipboardRetentionPolicy: String, CaseIterable, Identifiable {
 
 struct AppPreferences {
     private enum Key {
+        static let language = "settings.language"
         static let clipboardRetentionPolicy = "settings.clipboardRetentionPolicy"
         static let hotKeyKeyCode = "settings.showPanelHotKey.keyCode"
         static let hotKeyCarbonModifiers = "settings.showPanelHotKey.carbonModifiers"
         static let hotKeyEquivalent = "settings.showPanelHotKey.keyEquivalent"
         static let hotKeyDisplayKey = "settings.showPanelHotKey.displayKey"
+        static let isApplicationIgnoreEnabled = "settings.isApplicationIgnoreEnabled"
+        static let ignoredApplications = "settings.ignoredApplications"
     }
 
     var userDefaults: UserDefaults = .standard
+
+    var language: AppLanguage {
+        get {
+            guard let rawValue = userDefaults.string(forKey: Key.language),
+                  let language = AppLanguage(rawValue: rawValue)
+            else {
+                return .english
+            }
+
+            return language
+        }
+        nonmutating set {
+            userDefaults.set(newValue.rawValue, forKey: Key.language)
+        }
+    }
 
     var clipboardRetentionPolicy: ClipboardRetentionPolicy {
         get {
@@ -90,23 +128,203 @@ struct AppPreferences {
             userDefaults.set(newValue.displayKey, forKey: Key.hotKeyDisplayKey)
         }
     }
+
+    var isApplicationIgnoreEnabled: Bool {
+        get {
+            guard userDefaults.object(forKey: Key.isApplicationIgnoreEnabled) != nil else {
+                return true
+            }
+
+            return userDefaults.bool(forKey: Key.isApplicationIgnoreEnabled)
+        }
+        nonmutating set {
+            userDefaults.set(newValue, forKey: Key.isApplicationIgnoreEnabled)
+        }
+    }
+
+    var ignoredApplications: [IgnoredApplicationRule] {
+        get {
+            guard let data = userDefaults.data(forKey: Key.ignoredApplications) else {
+                return IgnoredApplicationRule.defaultRules
+            }
+
+            do {
+                return try JSONDecoder().decode([IgnoredApplicationRule].self, from: data)
+            } catch {
+                return IgnoredApplicationRule.defaultRules
+            }
+        }
+        nonmutating set {
+            guard let data = try? JSONEncoder().encode(newValue) else {
+                return
+            }
+
+            userDefaults.set(data, forKey: Key.ignoredApplications)
+        }
+    }
+}
+
+struct IgnoredApplicationRule: Codable, Equatable, Identifiable {
+    let name: String
+    let bundleIdentifier: String
+
+    var id: String {
+        bundleIdentifier.lowercased()
+    }
+
+    func matches(_ sourceApplication: ClipboardSourceApplication?) -> Bool {
+        guard let sourceBundleIdentifier = sourceApplication?.bundleIdentifier else {
+            return false
+        }
+
+        return sourceBundleIdentifier.caseInsensitiveCompare(bundleIdentifier) == .orderedSame
+    }
+
+    static func isIgnored(
+        _ sourceApplication: ClipboardSourceApplication?,
+        rules: [IgnoredApplicationRule],
+        isEnabled: Bool = true
+    ) -> Bool {
+        guard isEnabled else {
+            return false
+        }
+
+        return rules.contains { $0.matches(sourceApplication) }
+    }
+
+    static let defaultRules: [IgnoredApplicationRule] = [
+        IgnoredApplicationRule(
+            name: "Keychain Access",
+            bundleIdentifier: "com.apple.keychainaccess"
+        ),
+        IgnoredApplicationRule(
+            name: "SecurityAgent",
+            bundleIdentifier: "com.apple.SecurityAgent"
+        ),
+        IgnoredApplicationRule(
+            name: "Passwords",
+            bundleIdentifier: "com.apple.Passwords"
+        )
+    ]
 }
 
 struct SettingsPreferenceDescriptor: Equatable {
     let title: String
     let detail: String?
 
-    static let singleGroup: [SettingsPreferenceDescriptor] = [
-        SettingsPreferenceDescriptor(title: "运行状态", detail: nil),
-        SettingsPreferenceDescriptor(title: "开机自启", detail: nil),
-        SettingsPreferenceDescriptor(title: "监听剪贴板", detail: nil),
-        SettingsPreferenceDescriptor(title: SettingsShortcutDescriptor.showPanelTitle, detail: SettingsShortcutDescriptor.currentShortcutLabel),
-        SettingsPreferenceDescriptor(title: "历史记录有效期", detail: ClipboardRetentionPolicy.thirtyDays.title),
-        SettingsPreferenceDescriptor(title: "关于 V-Paste", detail: "Debug")
-    ]
+    static var singleGroup: [SettingsPreferenceDescriptor] {
+        singleGroup(language: .english)
+    }
+
+    static func singleGroup(language: AppLanguage) -> [SettingsPreferenceDescriptor] {
+        [
+            SettingsPreferenceDescriptor(
+                title: language == .english ? "Status" : "运行状态",
+                detail: nil
+            ),
+            SettingsPreferenceDescriptor(
+                title: language == .english ? "Launch at Login" : "开机自启",
+                detail: nil
+            ),
+            SettingsPreferenceDescriptor(
+                title: language == .english ? "Monitor Clipboard" : "监听剪贴板",
+                detail: nil
+            ),
+            SettingsPreferenceDescriptor(
+                title: SettingsShortcutDescriptor.showPanelTitle(language: language),
+                detail: SettingsShortcutDescriptor.currentShortcutLabel
+            ),
+            SettingsPreferenceDescriptor(
+                title: language == .english ? "History Retention" : "历史记录有效期",
+                detail: ClipboardRetentionPolicy.thirtyDays.title(language: language)
+            ),
+            SettingsPreferenceDescriptor(
+                title: language == .english ? "Language" : "语言",
+                detail: language.title
+            ),
+            SettingsPreferenceDescriptor(
+                title: language == .english ? "About V-Paste" : "关于 V-Paste",
+                detail: "Debug"
+            )
+        ]
+    }
+}
+
+struct SettingsTabDescriptor: Equatable, Identifiable {
+    enum ID: String, Hashable {
+        case general
+        case ignoredApplications
+    }
+
+    let id: ID
+    let title: String
+
+    static func all(language: AppLanguage) -> [SettingsTabDescriptor] {
+        [
+            SettingsTabDescriptor(
+                id: .general,
+                title: language == .english ? "General" : "通用"
+            ),
+            SettingsTabDescriptor(
+                id: .ignoredApplications,
+                title: SettingsIgnoredAppsDescriptor.title(language: language)
+            )
+        ]
+    }
+}
+
+enum SettingsIgnoredAppsDescriptor {
+    static func title(language: AppLanguage) -> String {
+        language == .english ? "App Ignore" : "应用忽略"
+    }
+
+    static func enabledTitle(language: AppLanguage) -> String {
+        language == .english ? "Enable App Ignore" : "启用应用忽略"
+    }
+
+    static func explanation(language: AppLanguage) -> String {
+        language == .english
+            ? "When enabled, V-Paste will not save clipboard content copied from the apps below. Use it for Keychain Access, password managers, or other sensitive apps."
+            : "开启后，V-Paste 不会保存下列应用产生的剪贴板内容。适合钥匙串、密码管理器等敏感应用。"
+    }
+
+    static func addTitle(language: AppLanguage) -> String {
+        language == .english ? "Add..." : "添加..."
+    }
+
+    static func removeTitle(language: AppLanguage) -> String {
+        language == .english ? "Remove" : "移除"
+    }
+
+    static func resetTitle(language: AppLanguage) -> String {
+        language == .english ? "Defaults" : "恢复默认"
+    }
+
+    static func emptyTitle(language: AppLanguage) -> String {
+        language == .english ? "No ignored apps" : "没有忽略应用"
+    }
 }
 
 enum SettingsShortcutDescriptor {
-    static let showPanelTitle = "显示 V-Paste"
+    static func showPanelTitle(language: AppLanguage) -> String {
+        language == .english ? "Show V-Paste" : "显示 V-Paste"
+    }
+
     static let currentShortcutLabel = MenuBarMenuDescriptor.defaultShortcutLabel
+
+    static func recordingPrompt(language: AppLanguage) -> String {
+        language == .english ? "Press shortcut" : "按下快捷键"
+    }
+
+    static func invalidShortcutMessage(language: AppLanguage) -> String {
+        language == .english
+            ? "Shortcut requires a modifier key"
+            : "快捷键需要包含修饰键"
+    }
+
+    static func registrationFailedMessage(language: AppLanguage) -> String {
+        language == .english
+            ? "Shortcut registration failed"
+            : "快捷键注册失败"
+    }
 }

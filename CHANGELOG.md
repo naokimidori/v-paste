@@ -2,9 +2,21 @@
 
 All notable changes to V-Paste will be documented in this file.
 
-The project follows semantic versioning once public releases begin.
+The project follows semantic versioning for public releases.
 
-## [0.1.0] - 2026-05-06
+## [1.0.1] - 2026-05-10
+
+### Added
+
+- Added an expanded About menu with the app version and a GitHub repository link.
+- Added English and Simplified Chinese localization across the panel, cards, groups, empty states, and menus.
+
+### Fixed
+
+- Fixed copying from cards while search is active.
+- Fixed Preferences tab switching stability and reduced excess bottom whitespace.
+
+## [1.0.0] - 2026-05-06
 
 ### Added
 

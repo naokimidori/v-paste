@@ -228,14 +228,14 @@ final class HistoryPanelViewModelTests: XCTestCase {
         XCTAssertEqual(
             HistoryCardHeaderPreview.typeSymbolName(
                 contentType: .text,
-                urlString: "https://example.com/pricing/pro-plan"
+                urlString: "https://platform.minimaxi.com/user-center/payment/token-plan"
             ),
             "link"
         )
         XCTAssertEqual(
             HistoryCardHeaderPreview.typeSymbolName(
                 contentType: .file,
-                urlString: "file:///tmp/report.png"
+                urlString: "file:///Users/longzhao/Desktop/report.png"
             ),
             "doc"
         )
@@ -361,10 +361,248 @@ final class HistoryPanelViewModelTests: XCTestCase {
         XCTAssertEqual(CopyToastContent.message, "Copied")
     }
 
-    func testV4ToolbarCopyStaysEnglish() {
+    func testToolbarCopyUsesRequestedLanguage() {
         XCTAssertEqual(HistoryPanelToolbarCopy.title, "Clipboard History")
+        XCTAssertEqual(HistoryPanelToolbarCopy.localizedTitle(language: .english), "Clipboard History")
+        XCTAssertEqual(HistoryPanelToolbarCopy.localizedTitle(language: .simplifiedChinese), "剪贴板历史")
         XCTAssertEqual(HistoryPanelToolbarCopy.defaultGroupName, "Untitled")
         XCTAssertEqual(HistoryPanelToolbarCopy.noResultsTitle, "No Results")
+        XCTAssertEqual(HistoryPanelToolbarCopy.noResultsTitle(language: .english), "No Results")
+        XCTAssertEqual(HistoryPanelToolbarCopy.noResultsTitle(language: .simplifiedChinese), "无结果")
+    }
+
+    func testHistoryCardTypeLabelsUseRequestedLanguage() {
+        XCTAssertEqual(
+            HistoryCardTypeLabel.title(
+                for: .text,
+                urlString: nil,
+                language: .simplifiedChinese
+            ),
+            "文本"
+        )
+        XCTAssertEqual(
+            HistoryCardTypeLabel.title(
+                for: .image,
+                urlString: nil,
+                language: .simplifiedChinese
+            ),
+            "图片"
+        )
+        XCTAssertEqual(
+            HistoryCardTypeLabel.title(
+                for: .file,
+                urlString: nil,
+                language: .simplifiedChinese
+            ),
+            "文件"
+        )
+        XCTAssertEqual(
+            HistoryCardTypeLabel.title(
+                for: .mixed,
+                urlString: nil,
+                language: .simplifiedChinese
+            ),
+            "混合"
+        )
+        XCTAssertEqual(
+            HistoryCardTypeLabel.title(
+                for: .text,
+                urlString: "https://example.com",
+                language: .simplifiedChinese
+            ),
+            "链接"
+        )
+        XCTAssertEqual(
+            HistoryCardTypeLabel.title(
+                for: .text,
+                urlString: nil,
+                language: .english
+            ),
+            "Text"
+        )
+    }
+
+    func testHistoryCardMetadataLabelsUseRequestedLanguage() {
+        let now = Date(timeIntervalSince1970: 10_000)
+
+        XCTAssertEqual(
+            HistoryCardRelativeAgeLabel.label(
+                copiedAt: now.addingTimeInterval(-20),
+                now: now,
+                language: .english
+            ),
+            "just now"
+        )
+        XCTAssertEqual(
+            HistoryCardRelativeAgeLabel.label(
+                copiedAt: now.addingTimeInterval(-20),
+                now: now,
+                language: .simplifiedChinese
+            ),
+            "刚刚"
+        )
+        XCTAssertEqual(
+            HistoryCardRelativeAgeLabel.label(
+                copiedAt: now.addingTimeInterval(-120),
+                now: now,
+                language: .simplifiedChinese
+            ),
+            "2 分钟前"
+        )
+        XCTAssertEqual(
+            HistoryCardRelativeAgeLabel.label(
+                copiedAt: now.addingTimeInterval(-10_800),
+                now: now,
+                language: .simplifiedChinese
+            ),
+            "3 小时前"
+        )
+        XCTAssertEqual(
+            HistoryCardRelativeAgeLabel.label(
+                copiedAt: now.addingTimeInterval(-345_600),
+                now: now,
+                language: .simplifiedChinese
+            ),
+            "4 天前"
+        )
+        XCTAssertEqual(
+            HistoryCardCharacterCountLabel.label(count: 6816, language: .english),
+            "6816 chars"
+        )
+        XCTAssertEqual(
+            HistoryCardCharacterCountLabel.label(count: 6816, language: .simplifiedChinese),
+            "6816 字符"
+        )
+    }
+
+    func testHistoryCardActionCopyUsesRequestedLanguage() {
+        XCTAssertEqual(HistoryCardActionCopy.addToGroupTitle(language: .english), "Add to Group")
+        XCTAssertEqual(HistoryCardActionCopy.addToGroupTitle(language: .simplifiedChinese), "添加到分组")
+        XCTAssertEqual(HistoryCardActionCopy.deleteTitle(language: .english), "Delete")
+        XCTAssertEqual(HistoryCardActionCopy.deleteTitle(language: .simplifiedChinese), "删除")
+        XCTAssertEqual(HistoryCardActionCopy.addFavoriteTitle(language: .english), "Add Favorite")
+        XCTAssertEqual(HistoryCardActionCopy.addFavoriteTitle(language: .simplifiedChinese), "收藏")
+        XCTAssertEqual(HistoryCardActionCopy.removeFavoriteTitle(language: .english), "Remove Favorite")
+        XCTAssertEqual(HistoryCardActionCopy.removeFavoriteTitle(language: .simplifiedChinese), "取消收藏")
+    }
+
+    func testPanelEmptyStateCopyUsesRequestedLanguage() {
+        XCTAssertEqual(
+            HistoryPanelEmptyStateCopy.title(
+                searchText: "missing",
+                showsFavoritesOnly: false,
+                hasActiveGroup: false,
+                language: .simplifiedChinese
+            ),
+            "无结果"
+        )
+        XCTAssertEqual(
+            HistoryPanelEmptyStateCopy.subtitle(
+                searchText: "missing",
+                showsFavoritesOnly: false,
+                hasActiveGroup: false,
+                language: .simplifiedChinese
+            ),
+            "试试更短的关键词。"
+        )
+        XCTAssertEqual(
+            HistoryPanelEmptyStateCopy.title(
+                searchText: "",
+                showsFavoritesOnly: true,
+                hasActiveGroup: false,
+                language: .simplifiedChinese
+            ),
+            "暂无收藏"
+        )
+        XCTAssertEqual(
+            HistoryPanelEmptyStateCopy.subtitle(
+                searchText: "",
+                showsFavoritesOnly: true,
+                hasActiveGroup: false,
+                language: .simplifiedChinese
+            ),
+            "为剪贴板卡片加星标后会显示在这里。"
+        )
+        XCTAssertEqual(
+            HistoryPanelEmptyStateCopy.title(
+                searchText: "",
+                showsFavoritesOnly: true,
+                hasActiveGroup: true,
+                language: .simplifiedChinese
+            ),
+            "这个分组暂无收藏"
+        )
+        XCTAssertEqual(
+            HistoryPanelEmptyStateCopy.subtitle(
+                searchText: "",
+                showsFavoritesOnly: true,
+                hasActiveGroup: true,
+                language: .simplifiedChinese
+            ),
+            "为这个分组里的卡片加星标后会显示在这里。"
+        )
+        XCTAssertEqual(
+            HistoryPanelEmptyStateCopy.title(
+                searchText: "",
+                showsFavoritesOnly: false,
+                hasActiveGroup: true,
+                language: .simplifiedChinese
+            ),
+            "分组为空"
+        )
+        XCTAssertEqual(
+            HistoryPanelEmptyStateCopy.subtitle(
+                searchText: "",
+                showsFavoritesOnly: false,
+                hasActiveGroup: true,
+                language: .simplifiedChinese
+            ),
+            "将卡片拖到这里，或通过“添加到分组”归类。"
+        )
+        XCTAssertEqual(
+            HistoryPanelEmptyStateCopy.title(
+                searchText: "",
+                showsFavoritesOnly: false,
+                hasActiveGroup: false,
+                language: .simplifiedChinese
+            ),
+            "复制内容以开始"
+        )
+        XCTAssertEqual(
+            HistoryPanelEmptyStateCopy.subtitle(
+                searchText: "",
+                showsFavoritesOnly: false,
+                hasActiveGroup: false,
+                language: .simplifiedChinese
+            ),
+            "文本、图片和文件引用会显示在这里。"
+        )
+    }
+
+    func testPanelSearchAndScopeCopyUsesRequestedLanguage() {
+        XCTAssertEqual(HistoryPanelSearchCopy.searchTitle(language: .english), "Search")
+        XCTAssertEqual(HistoryPanelSearchCopy.searchTitle(language: .simplifiedChinese), "搜索")
+        XCTAssertEqual(HistoryPanelSearchCopy.clearTitle(language: .english), "Clear Search")
+        XCTAssertEqual(HistoryPanelSearchCopy.clearTitle(language: .simplifiedChinese), "清除搜索")
+        XCTAssertEqual(HistoryPanelScopeCopy.allTitle(language: .english), "All")
+        XCTAssertEqual(HistoryPanelScopeCopy.allTitle(language: .simplifiedChinese), "全部")
+        XCTAssertEqual(HistoryPanelScopeCopy.favoritesTitle(language: .english), "Favorites")
+        XCTAssertEqual(HistoryPanelScopeCopy.favoritesTitle(language: .simplifiedChinese), "收藏")
+        XCTAssertEqual(HistoryPanelScopeCopy.clipboardScopeTitle(language: .english), "Clipboard scope")
+        XCTAssertEqual(HistoryPanelScopeCopy.clipboardScopeTitle(language: .simplifiedChinese), "剪贴板范围")
+    }
+
+    func testPanelGroupCopyUsesRequestedLanguage() {
+        XCTAssertEqual(HistoryPanelGroupCopy.createTitle(language: .english), "Create Group")
+        XCTAssertEqual(HistoryPanelGroupCopy.createTitle(language: .simplifiedChinese), "新建分组")
+        XCTAssertEqual(HistoryPanelGroupCopy.groupListTitle(language: .english), "Groups")
+        XCTAssertEqual(HistoryPanelGroupCopy.groupListTitle(language: .simplifiedChinese), "分组")
+        XCTAssertEqual(HistoryPanelGroupCopy.editTitle(language: .english), "Edit")
+        XCTAssertEqual(HistoryPanelGroupCopy.editTitle(language: .simplifiedChinese), "编辑")
+        XCTAssertEqual(HistoryPanelGroupCopy.deleteTitle(language: .english), "Delete")
+        XCTAssertEqual(HistoryPanelGroupCopy.deleteTitle(language: .simplifiedChinese), "删除")
+        XCTAssertEqual(HistoryPanelGroupCopy.colorTitle(language: .english), "Group Color")
+        XCTAssertEqual(HistoryPanelGroupCopy.colorTitle(language: .simplifiedChinese), "分组颜色")
     }
 
     func testGroupStripWidthShrinksToContentBeforeReachingMaxWidth() {
@@ -415,7 +653,7 @@ final class HistoryPanelViewModelTests: XCTestCase {
     func testDefaultGroupStripWidthDoesNotLeaveSlackBeforeCreateButton() {
         let groups = (0..<3).map { index in
             ClipboardGroup(
-                name: ClipboardGroup.defaultName,
+                name: ClipboardGroup.defaultName(language: .english),
                 colorHex: ClipboardGroupColorPalette.hexValues[
                     index % ClipboardGroupColorPalette.hexValues.count
                 ],
@@ -508,6 +746,33 @@ final class HistoryPanelViewModelTests: XCTestCase {
         XCTAssertFalse(
             HistoryPanelKeyEventRouting.shouldBypassPanelHandling(
                 firstResponder: nil
+            )
+        )
+    }
+
+    func testPanelKeyboardRoutingHandlesSearchCopyShortcutBeforeTextEditingBypass() {
+        XCTAssertTrue(
+            HistoryPanelKeyEventRouting.shouldHandleSearchCopyShortcut(
+                firstResponder: NSTextView(),
+                charactersIgnoringModifiers: "c",
+                modifierFlags: [.command],
+                isSearchExpanded: true
+            )
+        )
+        XCTAssertFalse(
+            HistoryPanelKeyEventRouting.shouldHandleSearchCopyShortcut(
+                firstResponder: NSTextView(),
+                charactersIgnoringModifiers: "c",
+                modifierFlags: [.command],
+                isSearchExpanded: false
+            )
+        )
+        XCTAssertFalse(
+            HistoryPanelKeyEventRouting.shouldHandleSearchCopyShortcut(
+                firstResponder: NSTextView(),
+                charactersIgnoringModifiers: "c",
+                modifierFlags: [.command, .option],
+                isSearchExpanded: true
             )
         )
     }
@@ -1030,6 +1295,30 @@ final class HistoryPanelViewModelTests: XCTestCase {
         )
 
         XCTAssertEqual(items.map(\.title), [
+            "Show V-Paste",
+            nil,
+            "Preferences...",
+            "About V-Paste",
+            nil,
+            "Quit"
+        ])
+        XCTAssertEqual(items[0].keyEquivalent, "~")
+        XCTAssertEqual(items[0].keyEquivalentModifierMask, [.option])
+        XCTAssertEqual(items[0].shortcutDisplay, "⌥~")
+        XCTAssertEqual(items[2].keyEquivalent, ",")
+        XCTAssertEqual(items[2].keyEquivalentModifierMask, [.command])
+        XCTAssertEqual(items[5].keyEquivalent, "q")
+        XCTAssertEqual(items[5].keyEquivalentModifierMask, [.command])
+    }
+
+    func testMenuBarDescriptorUsesChineseLanguage() {
+        let items = MenuBarMenuDescriptor.items(
+            appName: "V-Paste",
+            language: .simplifiedChinese,
+            shortcut: .defaultShowPanel
+        )
+
+        XCTAssertEqual(items.map(\.title), [
             "显示 V-Paste",
             nil,
             "偏好设置...",
@@ -1079,10 +1368,10 @@ final class HistoryPanelViewModelTests: XCTestCase {
         )
 
         XCTAssertEqual(items.map(\.title), [
-            "偏好设置...",
-            "关于 V-Paste",
+            "Preferences...",
+            "About V-Paste",
             nil,
-            "退出"
+            "Quit"
         ])
         XCTAssertEqual(items.map(\.action), [
             .openPreferences,
@@ -1093,28 +1382,187 @@ final class HistoryPanelViewModelTests: XCTestCase {
         XCTAssertFalse(items.contains { $0.action == .showPanel })
     }
 
+    func testPanelOverflowMenuDescriptorUsesRequestedLanguage() {
+        let items = MenuBarMenuDescriptor.panelOverflowItems(
+            appName: "V-Paste",
+            language: .simplifiedChinese,
+            shortcut: .defaultShowPanel,
+            appVersion: "1.0.1"
+        )
+
+        XCTAssertEqual(items.map(\.title), [
+            "偏好设置...",
+            "关于 V-Paste",
+            nil,
+            "退出"
+        ])
+        XCTAssertEqual(items[1].children.map(\.title), [
+            "版本 1.0.1",
+            "GitHub 仓库"
+        ])
+        XCTAssertEqual(items[1].children.map(\.action), [
+            nil,
+            .openGitHub
+        ])
+        XCTAssertEqual(
+            items[1].children[1].iconAssetName,
+            MenuBarAboutDescriptor.githubIconAssetName
+        )
+        XCTAssertEqual(
+            MenuBarAboutDescriptor.repositoryURL.absoluteString,
+            "https://github.com/naokimidori/v-paste"
+        )
+    }
+
+    func testMenuBarAboutDescriptorUsesVersionAndGitHubAction() throws {
+        let items = MenuBarMenuDescriptor.items(
+            appName: "V-Paste",
+            language: .english,
+            shortcut: .defaultShowPanel,
+            appVersion: "1.0.1"
+        )
+
+        let aboutItem = try XCTUnwrap(items.first { $0.action == .openAbout })
+        XCTAssertEqual(aboutItem.title, "About V-Paste")
+        XCTAssertEqual(aboutItem.children.map(\.title), [
+            "Version 1.0.1",
+            "GitHub Repository"
+        ])
+        XCTAssertEqual(aboutItem.children.map(\.action), [
+            nil,
+            .openGitHub
+        ])
+        XCTAssertEqual(
+            aboutItem.children[1].iconAssetName,
+            MenuBarAboutDescriptor.githubIconAssetName
+        )
+    }
+
+    func testHistoryPanelViewModelKeepsCurrentLanguageForOverflowMenu() {
+        let viewModel = HistoryPanelViewModel(items: [])
+
+        XCTAssertEqual(viewModel.language, .english)
+
+        viewModel.setLanguage(.simplifiedChinese)
+
+        XCTAssertEqual(viewModel.language, .simplifiedChinese)
+        XCTAssertEqual(
+            MenuBarMenuDescriptor.panelOverflowItems(
+                appName: "V-Paste",
+                language: viewModel.language,
+                shortcut: .defaultShowPanel
+            ).map(\.title),
+            [
+                "偏好设置...",
+                "关于 V-Paste",
+                nil,
+                "退出"
+            ]
+        )
+    }
+
+    func testAppStatePropagatesLanguageToPanelViewModel() {
+        let state = AppState.preview()
+
+        state.setLanguage(.simplifiedChinese)
+
+        XCTAssertEqual(state.panelViewModel.language, .simplifiedChinese)
+    }
+
     func testSettingsPreferencesUseSingleGroupOrder() {
-        XCTAssertEqual(SettingsPreferenceDescriptor.singleGroup.map(\.title), [
+        XCTAssertEqual(SettingsPreferenceDescriptor.singleGroup(language: .english).map(\.title), [
+            "Status",
+            "Launch at Login",
+            "Monitor Clipboard",
+            "Show V-Paste",
+            "History Retention",
+            "Language",
+            "About V-Paste"
+        ])
+        XCTAssertEqual(SettingsPreferenceDescriptor.singleGroup(language: .english).map(\.detail), [
+            nil,
+            nil,
+            nil,
+            "⌥~",
+            "30 days",
+            "English",
+            "Debug"
+        ])
+    }
+
+    func testSettingsPreferencesUseChineseLanguage() {
+        XCTAssertEqual(SettingsPreferenceDescriptor.singleGroup(language: .simplifiedChinese).map(\.title), [
             "运行状态",
             "开机自启",
             "监听剪贴板",
             "显示 V-Paste",
             "历史记录有效期",
+            "语言",
             "关于 V-Paste"
         ])
-        XCTAssertEqual(SettingsPreferenceDescriptor.singleGroup.map(\.detail), [
+        XCTAssertEqual(SettingsPreferenceDescriptor.singleGroup(language: .simplifiedChinese).map(\.detail), [
             nil,
             nil,
             nil,
             "⌥~",
             "30 天",
+            "简体中文",
             "Debug"
         ])
     }
 
+    func testSettingsTabsSeparateApplicationIgnoreGroup() {
+        XCTAssertEqual(SettingsTabDescriptor.all(language: .english).map(\.title), [
+            "General",
+            "App Ignore"
+        ])
+        XCTAssertEqual(SettingsTabDescriptor.all(language: .simplifiedChinese).map(\.title), [
+            "通用",
+            "应用忽略"
+        ])
+    }
+
+    func testIgnoredApplicationsUseVerticalListMetrics() {
+        XCTAssertEqual(SettingsViewLayoutMetrics.ignoredAppIconSize, 24)
+        XCTAssertEqual(SettingsViewLayoutMetrics.ignoredAppListRowHeight, 34)
+        XCTAssertEqual(SettingsViewLayoutMetrics.ignoredAppsListHeight, 144)
+        XCTAssertEqual(SettingsViewLayoutMetrics.ignoredAppsPickerWidth, 0)
+        XCTAssertEqual(SettingsViewLayoutMetrics.ignoredAppsDescriptionHeight, 46)
+        XCTAssertEqual(SettingsViewLayoutMetrics.ignoredAppsToggleRowHeight, 28)
+    }
+
+    func testIgnoredApplicationsDescriptorLocalizesListActions() {
+        XCTAssertEqual(SettingsIgnoredAppsDescriptor.title(language: .english), "App Ignore")
+        XCTAssertEqual(SettingsIgnoredAppsDescriptor.title(language: .simplifiedChinese), "应用忽略")
+        XCTAssertEqual(SettingsIgnoredAppsDescriptor.enabledTitle(language: .english), "Enable App Ignore")
+        XCTAssertEqual(SettingsIgnoredAppsDescriptor.enabledTitle(language: .simplifiedChinese), "启用应用忽略")
+        XCTAssertEqual(
+            SettingsIgnoredAppsDescriptor.explanation(language: .english),
+            "When enabled, V-Paste will not save clipboard content copied from the apps below. Use it for Keychain Access, password managers, or other sensitive apps."
+        )
+        XCTAssertEqual(
+            SettingsIgnoredAppsDescriptor.explanation(language: .simplifiedChinese),
+            "开启后，V-Paste 不会保存下列应用产生的剪贴板内容。适合钥匙串、密码管理器等敏感应用。"
+        )
+        XCTAssertEqual(SettingsIgnoredAppsDescriptor.addTitle(language: .english), "Add...")
+        XCTAssertEqual(SettingsIgnoredAppsDescriptor.addTitle(language: .simplifiedChinese), "添加...")
+        XCTAssertEqual(SettingsIgnoredAppsDescriptor.removeTitle(language: .english), "Remove")
+        XCTAssertEqual(SettingsIgnoredAppsDescriptor.removeTitle(language: .simplifiedChinese), "移除")
+        XCTAssertEqual(SettingsIgnoredAppsDescriptor.resetTitle(language: .english), "Defaults")
+        XCTAssertEqual(SettingsIgnoredAppsDescriptor.resetTitle(language: .simplifiedChinese), "恢复默认")
+    }
+
     func testShortcutSettingsDescriptorShowsCurrentShortcut() {
-        XCTAssertEqual(SettingsShortcutDescriptor.showPanelTitle, "显示 V-Paste")
+        XCTAssertEqual(SettingsShortcutDescriptor.showPanelTitle(language: .english), "Show V-Paste")
+        XCTAssertEqual(SettingsShortcutDescriptor.showPanelTitle(language: .simplifiedChinese), "显示 V-Paste")
         XCTAssertEqual(SettingsShortcutDescriptor.currentShortcutLabel, "⌥~")
+    }
+
+    func testShortcutRecordingCopyLocalizes() {
+        XCTAssertEqual(SettingsShortcutDescriptor.recordingPrompt(language: .english), "Press shortcut")
+        XCTAssertEqual(SettingsShortcutDescriptor.recordingPrompt(language: .simplifiedChinese), "按下快捷键")
+        XCTAssertEqual(SettingsShortcutDescriptor.invalidShortcutMessage(language: .english), "Shortcut requires a modifier key")
+        XCTAssertEqual(SettingsShortcutDescriptor.invalidShortcutMessage(language: .simplifiedChinese), "快捷键需要包含修饰键")
     }
 
     func testHotKeyPreferenceCapturesModifiedKeyboardShortcut() {
@@ -1138,7 +1586,12 @@ final class HistoryPanelViewModelTests: XCTestCase {
     }
 
     func testClipboardRetentionPolicyUsesRequestedOptions() {
-        XCTAssertEqual(ClipboardRetentionPolicy.allCases.map(\.title), [
+        XCTAssertEqual(ClipboardRetentionPolicy.allCases.map { $0.title(language: .english) }, [
+            "7 days",
+            "30 days",
+            "Unlimited"
+        ])
+        XCTAssertEqual(ClipboardRetentionPolicy.allCases.map { $0.title(language: .simplifiedChinese) }, [
             "7 天",
             "30 天",
             "不限制"
@@ -1148,7 +1601,7 @@ final class HistoryPanelViewModelTests: XCTestCase {
         XCTAssertNil(ClipboardRetentionPolicy.unlimited.dayCount)
     }
 
-    func testAppPreferencesRoundTripsRetentionAndShortcut() throws {
+    func testAppPreferencesRoundTripsLanguageRetentionAndShortcut() throws {
         let suiteName = UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         let preferences = AppPreferences(userDefaults: defaults)
@@ -1159,28 +1612,108 @@ final class HistoryPanelViewModelTests: XCTestCase {
             displayKey: "K"
         )
 
+        XCTAssertEqual(preferences.language, .english)
+        preferences.language = .simplifiedChinese
         preferences.clipboardRetentionPolicy = .sevenDays
         preferences.showPanelHotKey = shortcut
 
         let loadedPreferences = AppPreferences(userDefaults: defaults)
+        XCTAssertEqual(loadedPreferences.language, .simplifiedChinese)
         XCTAssertEqual(loadedPreferences.clipboardRetentionPolicy, .sevenDays)
         XCTAssertEqual(loadedPreferences.showPanelHotKey, shortcut)
 
         defaults.removePersistentDomain(forName: suiteName)
     }
 
+    func testIgnoredApplicationDefaultsIncludeSecureApps() {
+        XCTAssertTrue(IgnoredApplicationRule.defaultRules.contains {
+            $0.bundleIdentifier == "com.apple.keychainaccess"
+        })
+        XCTAssertTrue(IgnoredApplicationRule.defaultRules.contains {
+            $0.bundleIdentifier == "com.apple.SecurityAgent"
+        })
+    }
+
+    func testIgnoredApplicationRuleMatchesBundleIdentifierCaseInsensitively() {
+        let rule = IgnoredApplicationRule(
+            name: "Keychain Access",
+            bundleIdentifier: "com.apple.keychainaccess"
+        )
+        let sourceApplication = ClipboardSourceApplication(
+            name: "Keychain Access",
+            bundleIdentifier: "COM.APPLE.KEYCHAINACCESS"
+        )
+
+        XCTAssertTrue(rule.matches(sourceApplication))
+    }
+
+    func testIgnoredApplicationMatchingCanBeDisabled() {
+        let sourceApplication = ClipboardSourceApplication(
+            name: "Keychain Access",
+            bundleIdentifier: "com.apple.keychainaccess"
+        )
+
+        XCTAssertTrue(IgnoredApplicationRule.isIgnored(
+            sourceApplication,
+            rules: IgnoredApplicationRule.defaultRules,
+            isEnabled: true
+        ))
+        XCTAssertFalse(IgnoredApplicationRule.isIgnored(
+            sourceApplication,
+            rules: IgnoredApplicationRule.defaultRules,
+            isEnabled: false
+        ))
+    }
+
+    func testApplicationIgnorePreferenceDefaultsOnAndCanBeDisabled() throws {
+        let suiteName = UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        let preferences = AppPreferences(userDefaults: defaults)
+
+        XCTAssertTrue(preferences.isApplicationIgnoreEnabled)
+
+        preferences.isApplicationIgnoreEnabled = false
+
+        let loadedPreferences = AppPreferences(userDefaults: defaults)
+        XCTAssertFalse(loadedPreferences.isApplicationIgnoreEnabled)
+
+        defaults.removePersistentDomain(forName: suiteName)
+    }
+
+    func testAppPreferencesRoundTripsIgnoredApplications() throws {
+        let suiteName = UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        let preferences = AppPreferences(userDefaults: defaults)
+        let customRules = [
+            IgnoredApplicationRule(
+                name: "Notes",
+                bundleIdentifier: "com.apple.Notes"
+            )
+        ]
+
+        XCTAssertGreaterThanOrEqual(preferences.ignoredApplications.count, 2)
+
+        preferences.ignoredApplications = customRules
+
+        let loadedPreferences = AppPreferences(userDefaults: defaults)
+        XCTAssertEqual(loadedPreferences.ignoredApplications, customRules)
+
+        defaults.removePersistentDomain(forName: suiteName)
+    }
+
     func testSettingsPanelDescriptorUsesPopupContentMetrics() {
-        XCTAssertEqual(SettingsPanelDescriptor.title, "偏好设置")
-        XCTAssertEqual(SettingsPanelDescriptor.contentSize, CGSize(width: 520, height: 300))
+        XCTAssertEqual(SettingsPanelDescriptor.title(language: .english), "Preferences")
+        XCTAssertEqual(SettingsPanelDescriptor.title(language: .simplifiedChinese), "偏好设置")
+        XCTAssertEqual(SettingsPanelDescriptor.contentSize, CGSize(width: 580, height: 380))
     }
 
     func testSettingsPanelPlacementKeepsHorizontalCenterAndUsesUpperThirdVerticalPosition() {
         let frame = SettingsPanelPlacement.preferredFrame(
-            contentSize: CGSize(width: 520, height: 300),
+            contentSize: CGSize(width: 580, height: 420),
             screenFrame: NSRect(x: 100, y: 60, width: 1440, height: 900)
         )
 
-        XCTAssertEqual(frame, NSRect(x: 560, y: 510, width: 520, height: 300))
+        XCTAssertEqual(frame, NSRect(x: 530, y: 450, width: 580, height: 420))
     }
 
     func testSettingsViewUsesCompactBorderlessContentLayout() {
@@ -1193,6 +1726,10 @@ final class HistoryPanelViewModelTests: XCTestCase {
         XCTAssertFalse(SettingsViewLayoutMetrics.drawsGroupBorder)
     }
 
+    func testSettingsViewUsesManualTabSwitcherToAvoidNativeTabContainerCycle() {
+        XCTAssertTrue(SettingsViewLayoutMetrics.usesManualTabSwitcher)
+    }
+
     func testSettingsPanelHeightKeepsClearHistoryButtonVisible() {
         XCTAssertEqual(SettingsViewLayoutMetrics.clearHistoryButtonRowHeight, 28)
         XCTAssertGreaterThanOrEqual(
@@ -1201,20 +1738,31 @@ final class HistoryPanelViewModelTests: XCTestCase {
         )
     }
 
+    func testSettingsPanelHeightFitsIgnoredApplicationsTab() {
+        XCTAssertGreaterThanOrEqual(
+            SettingsPanelDescriptor.contentSize.height,
+            SettingsViewLayoutMetrics.minimumHeightForIgnoredApplicationsTab
+        )
+    }
+
     func testClearHistoryUsesDestructiveConfirmationCopy() {
-        XCTAssertEqual(SettingsClearHistoryConfirmationDescriptor.title, "确认清空历史？")
+        XCTAssertEqual(SettingsClearHistoryConfirmationDescriptor.title(language: .english), "Clear history?")
+        XCTAssertEqual(SettingsClearHistoryConfirmationDescriptor.title(language: .simplifiedChinese), "确认清空历史？")
         XCTAssertEqual(
-            SettingsClearHistoryConfirmationDescriptor.message,
+            SettingsClearHistoryConfirmationDescriptor.message(language: .simplifiedChinese),
             "此操作会删除所有剪贴板记录，无法撤销。"
         )
-        XCTAssertEqual(SettingsClearHistoryConfirmationDescriptor.confirmTitle, "清空历史")
-        XCTAssertEqual(SettingsClearHistoryConfirmationDescriptor.cancelTitle, "取消")
+        XCTAssertEqual(SettingsClearHistoryConfirmationDescriptor.confirmTitle(language: .english), "Clear History")
+        XCTAssertEqual(SettingsClearHistoryConfirmationDescriptor.confirmTitle(language: .simplifiedChinese), "清空历史")
+        XCTAssertEqual(SettingsClearHistoryConfirmationDescriptor.cancelTitle(language: .english), "Cancel")
+        XCTAssertEqual(SettingsClearHistoryConfirmationDescriptor.cancelTitle(language: .simplifiedChinese), "取消")
     }
 
     func testMenuBarDescriptorMapsItemsToActions() {
         XCTAssertEqual(MenuBarMenuAction.showPanel.selectorName, "openClipboardHistory")
         XCTAssertEqual(MenuBarMenuAction.openPreferences.selectorName, "openPreferences")
         XCTAssertEqual(MenuBarMenuAction.openAbout.selectorName, "openAbout")
+        XCTAssertEqual(MenuBarMenuAction.openGitHub.selectorName, "openGitHub")
         XCTAssertEqual(MenuBarMenuAction.quit.selectorName, "quit")
     }
 }

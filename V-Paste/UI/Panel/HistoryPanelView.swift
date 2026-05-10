@@ -4,8 +4,122 @@ import UniformTypeIdentifiers
 
 enum HistoryPanelToolbarCopy {
     static let title = "Clipboard History"
-    static let defaultGroupName = ClipboardGroup.defaultName
+    static let defaultGroupName = ClipboardGroup.defaultName(language: .english)
     static let noResultsTitle = "No Results"
+
+    static func localizedTitle(language: AppLanguage) -> String {
+        language == .english ? title : "剪贴板历史"
+    }
+
+    static func noResultsTitle(language: AppLanguage) -> String {
+        language == .english ? noResultsTitle : "无结果"
+    }
+}
+
+enum HistoryPanelSearchCopy {
+    static func searchTitle(language: AppLanguage) -> String {
+        language == .english ? "Search" : "搜索"
+    }
+
+    static func clearTitle(language: AppLanguage) -> String {
+        language == .english ? "Clear Search" : "清除搜索"
+    }
+}
+
+enum HistoryPanelScopeCopy {
+    static func allTitle(language: AppLanguage) -> String {
+        language == .english ? "All" : "全部"
+    }
+
+    static func favoritesTitle(language: AppLanguage) -> String {
+        language == .english ? "Favorites" : "收藏"
+    }
+
+    static func clipboardScopeTitle(language: AppLanguage) -> String {
+        language == .english ? "Clipboard scope" : "剪贴板范围"
+    }
+}
+
+enum HistoryPanelEmptyStateCopy {
+    static func title(
+        searchText: String,
+        showsFavoritesOnly: Bool,
+        hasActiveGroup: Bool,
+        language: AppLanguage
+    ) -> String {
+        if !searchText.isEmpty {
+            return HistoryPanelToolbarCopy.noResultsTitle(language: language)
+        }
+
+        if showsFavoritesOnly {
+            if hasActiveGroup {
+                return language == .english ? "No favorites in this group" : "这个分组暂无收藏"
+            }
+
+            return language == .english ? "No favorite clips" : "暂无收藏"
+        }
+
+        if hasActiveGroup {
+            return language == .english ? "Group is empty" : "分组为空"
+        }
+
+        return language == .english ? "Copy something to begin" : "复制内容以开始"
+    }
+
+    static func subtitle(
+        searchText: String,
+        showsFavoritesOnly: Bool,
+        hasActiveGroup: Bool,
+        language: AppLanguage
+    ) -> String {
+        if !searchText.isEmpty {
+            return language == .english ? "Try a shorter search term." : "试试更短的关键词。"
+        }
+
+        if showsFavoritesOnly {
+            if hasActiveGroup {
+                return language == .english
+                    ? "Star a clip in this group to keep it here."
+                    : "为这个分组里的卡片加星标后会显示在这里。"
+            }
+
+            return language == .english
+                ? "Star a clip to keep it here."
+                : "为剪贴板卡片加星标后会显示在这里。"
+        }
+
+        if hasActiveGroup {
+            return language == .english
+                ? "Drag a card here or use Add to Group."
+                : "将卡片拖到这里，或通过“添加到分组”归类。"
+        }
+
+        return language == .english
+            ? "Text, images, and file references will appear here."
+            : "文本、图片和文件引用会显示在这里。"
+    }
+}
+
+enum HistoryPanelGroupCopy {
+    static func createTitle(language: AppLanguage) -> String {
+        language == .english ? "Create Group" : "新建分组"
+    }
+
+    static func groupListTitle(language: AppLanguage) -> String {
+        language == .english ? "Groups" : "分组"
+    }
+
+    static func editTitle(language: AppLanguage) -> String {
+        language == .english ? "Edit" : "编辑"
+    }
+
+    static func deleteTitle(language: AppLanguage) -> String {
+        language == .english ? "Delete" : "删除"
+    }
+
+    static func colorTitle(language: AppLanguage) -> String {
+        language == .english ? "Group Color" : "分组颜色"
+    }
 }
 
 enum HistoryPanelSearchTransition {
@@ -442,7 +556,10 @@ struct HistoryPanelView: View {
     private var overflowMenuButton: some View {
         Menu {
             ForEach(
-                Array(MenuBarMenuDescriptor.panelOverflowItems(appName: "V-Paste").enumerated()),
+                Array(MenuBarMenuDescriptor.panelOverflowItems(
+                    appName: "V-Paste",
+                    language: viewModel.language
+                ).enumerated()),
                 id: \.offset
             ) { _, descriptor in
                 overflowMenuContent(for: descriptor)
@@ -455,28 +572,80 @@ struct HistoryPanelView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("Menu")
-        .accessibilityLabel("Menu")
+        .help(overflowMenuAccessibilityLabel)
+        .accessibilityLabel(overflowMenuAccessibilityLabel)
+    }
+
+    private var overflowMenuAccessibilityLabel: String {
+        viewModel.language == .english ? "Menu" : "菜单"
+    }
+
+    private func overflowMenuContent(for descriptor: MenuBarMenuItemDescriptor) -> AnyView {
+        guard let title = descriptor.title else {
+            return AnyView(Divider())
+        }
+
+        if !descriptor.children.isEmpty {
+            return AnyView(
+                Menu(title) {
+                    ForEach(Array(descriptor.children.enumerated()), id: \.offset) { _, child in
+                        overflowMenuContent(for: child)
+                    }
+                }
+            )
+        }
+
+        switch descriptor.action {
+        case .openPreferences:
+            return AnyView(
+                Button(action: performOpenPreferences) {
+                    overflowMenuLabel(title: title, descriptor: descriptor)
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            )
+        case .openAbout:
+            return AnyView(
+                Button(action: performOpenAbout) {
+                    overflowMenuLabel(title: title, descriptor: descriptor)
+                }
+            )
+        case .openGitHub:
+            return AnyView(
+                Button(action: performOpenGitHub) {
+                    overflowMenuLabel(title: title, descriptor: descriptor)
+                }
+            )
+        case .quit:
+            return AnyView(
+                Button(action: onQuit) {
+                    overflowMenuLabel(title: title, descriptor: descriptor)
+                }
+                .keyboardShortcut("q", modifiers: .command)
+            )
+        case .showPanel, nil:
+            return AnyView(
+                Button(action: {}) {
+                    overflowMenuLabel(title: title, descriptor: descriptor)
+                }
+                .disabled(true)
+            )
+        }
     }
 
     @ViewBuilder
-    private func overflowMenuContent(for descriptor: MenuBarMenuItemDescriptor) -> some View {
-        if let title = descriptor.title {
-            switch descriptor.action {
-            case .openPreferences:
-                Button(title, action: performOpenPreferences)
-                    .keyboardShortcut(",", modifiers: .command)
-            case .openAbout:
-                Button(title, action: performOpenAbout)
-            case .quit:
-                Button(title, action: onQuit)
-                    .keyboardShortcut("q", modifiers: .command)
-            case .showPanel, nil:
-                Button(title) {}
-                    .disabled(true)
+    private func overflowMenuLabel(
+        title: String,
+        descriptor: MenuBarMenuItemDescriptor
+    ) -> some View {
+        if let iconAssetName = descriptor.iconAssetName {
+            Label {
+                Text(title)
+            } icon: {
+                Image(iconAssetName)
+                    .renderingMode(.template)
             }
         } else {
-            Divider()
+            Text(title)
         }
     }
 
@@ -486,6 +655,10 @@ struct HistoryPanelView: View {
 
     private func performOpenAbout() {
         onOpenAbout()
+    }
+
+    private func performOpenGitHub() {
+        NSWorkspace.shared.open(MenuBarAboutDescriptor.repositoryURL)
     }
 
     private var collapsedToolbar: some View {
@@ -500,10 +673,13 @@ struct HistoryPanelView: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .help("Search")
-            .accessibilityLabel("Search")
+            .help(HistoryPanelSearchCopy.searchTitle(language: viewModel.language))
+            .accessibilityLabel(HistoryPanelSearchCopy.searchTitle(language: viewModel.language))
 
-            Label(HistoryPanelToolbarCopy.title, systemImage: "clock.arrow.circlepath")
+            Label(
+                HistoryPanelToolbarCopy.localizedTitle(language: viewModel.language),
+                systemImage: "clock.arrow.circlepath"
+            )
                 .font(.system(.callout, design: .rounded, weight: .semibold))
                 .foregroundStyle(.primary)
                 .padding(.horizontal, 12)
@@ -526,7 +702,7 @@ struct HistoryPanelView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: 28, height: 28)
-                .accessibilityLabel(HistoryPanelToolbarCopy.title)
+                .accessibilityLabel(HistoryPanelToolbarCopy.localizedTitle(language: viewModel.language))
 
             groupStrip(maxWidth: 300)
 
@@ -544,6 +720,7 @@ struct HistoryPanelView: View {
                                 item: item,
                                 isSelected: index == viewModel.selectedIndex,
                                 groups: groups,
+                                language: viewModel.language,
                                 onSelect: {
                                     viewModel.selectItem(id: item.id)
                                 },
@@ -663,7 +840,7 @@ struct HistoryPanelView: View {
     private var favoriteScopeControl: some View {
         HStack(spacing: 2) {
             scopeButton(
-                title: "All",
+                title: HistoryPanelScopeCopy.allTitle(language: viewModel.language),
                 systemImage: "tray.full",
                 isActive: !viewModel.showsFavoritesOnly
             ) {
@@ -671,7 +848,7 @@ struct HistoryPanelView: View {
             }
 
             scopeButton(
-                title: "Favorites",
+                title: HistoryPanelScopeCopy.favoritesTitle(language: viewModel.language),
                 systemImage: "star.fill",
                 isActive: viewModel.showsFavoritesOnly
             ) {
@@ -681,7 +858,7 @@ struct HistoryPanelView: View {
         .padding(3)
         .background(Color(nsColor: .separatorColor).opacity(0.18), in: Capsule())
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Clipboard scope")
+        .accessibilityLabel(HistoryPanelScopeCopy.clipboardScopeTitle(language: viewModel.language))
     }
 
     private func scopeButton(
@@ -722,7 +899,7 @@ struct HistoryPanelView: View {
                     set: { viewModel.updateSearchText($0) }
                 ),
                 isFocused: $isSearchFocused,
-                placeholder: "Search",
+                placeholder: HistoryPanelSearchCopy.searchTitle(language: viewModel.language),
                 onSubmit: copySelectedItem,
                 onEmptyBackspace: collapseSearchIfEmpty
             )
@@ -737,7 +914,7 @@ struct HistoryPanelView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Clear Search")
+                .accessibilityLabel(HistoryPanelSearchCopy.clearTitle(language: viewModel.language))
             }
         }
         .padding(.horizontal, 11)
@@ -759,19 +936,21 @@ struct HistoryPanelView: View {
     }
 
     private var emptyStateTitle: String {
-        if !viewModel.searchText.isEmpty {
-            return HistoryPanelToolbarCopy.noResultsTitle
-        }
-
-        return viewModel.showsFavoritesOnly ? "No favorite clips" : "Copy something to begin"
+        HistoryPanelEmptyStateCopy.title(
+            searchText: viewModel.searchText,
+            showsFavoritesOnly: viewModel.showsFavoritesOnly,
+            hasActiveGroup: viewModel.activeGroupID != nil,
+            language: viewModel.language
+        )
     }
 
     private var emptyStateSubtitle: String {
-        if !viewModel.searchText.isEmpty {
-            return "Try a shorter search term."
-        }
-
-        return viewModel.showsFavoritesOnly ? "Star a clip to keep it here." : "Text, images, and file references will appear here."
+        HistoryPanelEmptyStateCopy.subtitle(
+            searchText: viewModel.searchText,
+            showsFavoritesOnly: viewModel.showsFavoritesOnly,
+            hasActiveGroup: viewModel.activeGroupID != nil,
+            language: viewModel.language
+        )
     }
 
     private func copySelectedItem() {
@@ -843,8 +1022,8 @@ struct HistoryPanelView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .help("Create Group")
-        .accessibilityLabel("Create Group")
+        .help(HistoryPanelGroupCopy.createTitle(language: viewModel.language))
+        .accessibilityLabel(HistoryPanelGroupCopy.createTitle(language: viewModel.language))
     }
 
     private func groupStrip(maxWidth: CGFloat) -> some View {
@@ -866,7 +1045,7 @@ struct HistoryPanelView: View {
         .frame(width: width)
         .fixedSize(horizontal: false, vertical: true)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Groups")
+        .accessibilityLabel(HistoryPanelGroupCopy.groupListTitle(language: viewModel.language))
     }
 
     @ViewBuilder
@@ -905,11 +1084,11 @@ struct HistoryPanelView: View {
                 handleDrop(providers: providers, groupID: group.id)
             }
             .contextMenu {
-                Button("Edit") {
+                Button(HistoryPanelGroupCopy.editTitle(language: viewModel.language)) {
                     beginEditing(group: group)
                 }
 
-                Button("Delete", role: .destructive) {
+                Button(HistoryPanelGroupCopy.deleteTitle(language: viewModel.language), role: .destructive) {
                     deleteGroup(group)
                 }
             }
@@ -946,7 +1125,7 @@ struct HistoryPanelView: View {
             handleDrop(providers: providers, groupID: group.id)
         }
         .contextMenu {
-            Button("Delete", role: .destructive) {
+            Button(HistoryPanelGroupCopy.deleteTitle(language: viewModel.language), role: .destructive) {
                 deleteGroup(group)
             }
         }
@@ -973,7 +1152,7 @@ struct HistoryPanelView: View {
                 }
             )
         }
-        .accessibilityLabel("Group Color")
+        .accessibilityLabel(HistoryPanelGroupCopy.colorTitle(language: viewModel.language))
     }
 
     private func colorPickerBinding(for groupID: ClipboardGroup.ID) -> Binding<Bool> {
@@ -1030,7 +1209,9 @@ struct HistoryPanelView: View {
         let trimmedName = editingGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
         let updatedGroup = ClipboardGroup(
             id: originalGroup.id,
-            name: trimmedName.isEmpty ? ClipboardGroup.defaultName : trimmedName,
+            name: trimmedName.isEmpty
+                ? ClipboardGroup.defaultName(language: viewModel.language)
+                : trimmedName,
             colorHex: editingGroupColorHex,
             createdAt: originalGroup.createdAt,
             sortOrder: originalGroup.sortOrder

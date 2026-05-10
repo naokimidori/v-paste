@@ -27,10 +27,15 @@ final class MenuBarController: NSObject {
 
     func rebuildMenu(
         isMonitoringPaused: Bool,
+        language: AppLanguage = .english,
         shortcut: HotKeyPreference = .defaultShowPanel
     ) {
         let menu = NSMenu()
-        MenuBarMenuDescriptor.items(appName: "V-Paste", shortcut: shortcut).forEach { descriptor in
+        MenuBarMenuDescriptor.items(
+            appName: "V-Paste",
+            language: language,
+            shortcut: shortcut
+        ).forEach { descriptor in
             menu.addItem(menuItem(for: descriptor))
         }
 
@@ -49,6 +54,23 @@ final class MenuBarController: NSObject {
         )
         item.keyEquivalentModifierMask = descriptor.keyEquivalentModifierMask
         item.target = self
+        item.isEnabled = descriptor.action != nil || !descriptor.children.isEmpty
+
+        if let iconAssetName = descriptor.iconAssetName,
+           let image = NSImage(named: NSImage.Name(iconAssetName))?.copy() as? NSImage {
+            image.isTemplate = true
+            image.size = NSSize(width: 16, height: 16)
+            item.image = image
+        }
+
+        if !descriptor.children.isEmpty {
+            let submenu = NSMenu(title: title)
+            descriptor.children.forEach { child in
+                submenu.addItem(menuItem(for: child))
+            }
+            item.submenu = submenu
+        }
+
         return item
     }
 
@@ -97,6 +119,10 @@ final class MenuBarController: NSObject {
 
     @objc private func openAbout() {
         onOpenAbout()
+    }
+
+    @objc private func openGitHub() {
+        NSWorkspace.shared.open(MenuBarAboutDescriptor.repositoryURL)
     }
 
     @objc private func quit() {

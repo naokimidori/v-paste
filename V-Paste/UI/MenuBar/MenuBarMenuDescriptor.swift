@@ -4,6 +4,7 @@ enum MenuBarMenuAction: Equatable {
     case showPanel
     case openPreferences
     case openAbout
+    case openGitHub
     case quit
 
     var selectorName: String {
@@ -14,6 +15,8 @@ enum MenuBarMenuAction: Equatable {
             return "openPreferences"
         case .openAbout:
             return "openAbout"
+        case .openGitHub:
+            return "openGitHub"
         case .quit:
             return "quit"
         }
@@ -26,15 +29,65 @@ struct MenuBarMenuItemDescriptor: Equatable {
     let keyEquivalent: String
     let keyEquivalentModifierMask: NSEvent.ModifierFlags
     let shortcutDisplay: String?
+    let iconAssetName: String?
+    let children: [MenuBarMenuItemDescriptor]
+
+    init(
+        title: String?,
+        action: MenuBarMenuAction?,
+        keyEquivalent: String = "",
+        keyEquivalentModifierMask: NSEvent.ModifierFlags = [],
+        shortcutDisplay: String? = nil,
+        iconAssetName: String? = nil,
+        children: [MenuBarMenuItemDescriptor] = []
+    ) {
+        self.title = title
+        self.action = action
+        self.keyEquivalent = keyEquivalent
+        self.keyEquivalentModifierMask = keyEquivalentModifierMask
+        self.shortcutDisplay = shortcutDisplay
+        self.iconAssetName = iconAssetName
+        self.children = children
+    }
 
     static func separator() -> MenuBarMenuItemDescriptor {
         MenuBarMenuItemDescriptor(
             title: nil,
-            action: nil,
-            keyEquivalent: "",
-            keyEquivalentModifierMask: [],
-            shortcutDisplay: nil
+            action: nil
         )
+    }
+}
+
+enum MenuBarAboutDescriptor {
+    static let repositoryURL = URL(string: "https://github.com/naokimidori/v-paste")!
+    static let githubIconAssetName = "GitHubIcon"
+
+    static func versionText(
+        language: AppLanguage,
+        versionLabel: String = currentVersionLabel()
+    ) -> String {
+        language == .english
+            ? "Version \(versionLabel)"
+            : "版本 \(versionLabel)"
+    }
+
+    static func githubTitle(language: AppLanguage) -> String {
+        language == .english ? "GitHub Repository" : "GitHub 仓库"
+    }
+
+    static func currentVersionLabel(bundle: Bundle = .main) -> String {
+        let info = bundle.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String
+        let build = info?["CFBundleVersion"] as? String
+
+        switch (version, build) {
+        case let (.some(version), .some(build)) where !build.isEmpty:
+            return "\(version) (\(build))"
+        case let (.some(version), _):
+            return version
+        default:
+            return "Debug"
+        }
     }
 }
 
@@ -43,20 +96,24 @@ enum MenuBarMenuDescriptor {
 
     static func panelOverflowItems(
         appName: String,
-        shortcut: HotKeyPreference = .defaultShowPanel
+        language: AppLanguage = .english,
+        shortcut: HotKeyPreference = .defaultShowPanel,
+        appVersion: String = MenuBarAboutDescriptor.currentVersionLabel()
     ) -> [MenuBarMenuItemDescriptor] {
-        items(appName: appName, shortcut: shortcut)
+        items(appName: appName, language: language, shortcut: shortcut, appVersion: appVersion)
             .filter { $0.action != .showPanel }
             .trimmedSeparators()
     }
 
     static func items(
         appName: String,
-        shortcut: HotKeyPreference = .defaultShowPanel
+        language: AppLanguage = .english,
+        shortcut: HotKeyPreference = .defaultShowPanel,
+        appVersion: String = MenuBarAboutDescriptor.currentVersionLabel()
     ) -> [MenuBarMenuItemDescriptor] {
         [
             MenuBarMenuItemDescriptor(
-                title: "显示 \(appName)",
+                title: language == .english ? "Show \(appName)" : "显示 \(appName)",
                 action: .showPanel,
                 keyEquivalent: shortcut.keyEquivalent,
                 keyEquivalentModifierMask: shortcut.keyEquivalentModifierMask,
@@ -64,26 +121,44 @@ enum MenuBarMenuDescriptor {
             ),
             .separator(),
             MenuBarMenuItemDescriptor(
-                title: "偏好设置...",
+                title: language == .english ? "Preferences..." : "偏好设置...",
                 action: .openPreferences,
                 keyEquivalent: ",",
                 keyEquivalentModifierMask: [.command],
                 shortcutDisplay: "⌘,"
             ),
             MenuBarMenuItemDescriptor(
-                title: "关于 \(appName)",
+                title: language == .english ? "About \(appName)" : "关于 \(appName)",
                 action: .openAbout,
-                keyEquivalent: "",
-                keyEquivalentModifierMask: [],
-                shortcutDisplay: nil
+                children: aboutItems(language: language, appVersion: appVersion)
             ),
             .separator(),
             MenuBarMenuItemDescriptor(
-                title: "退出",
+                title: language == .english ? "Quit" : "退出",
                 action: .quit,
                 keyEquivalent: "q",
                 keyEquivalentModifierMask: [.command],
                 shortcutDisplay: "⌘Q"
+            )
+        ]
+    }
+
+    private static func aboutItems(
+        language: AppLanguage,
+        appVersion: String
+    ) -> [MenuBarMenuItemDescriptor] {
+        [
+            MenuBarMenuItemDescriptor(
+                title: MenuBarAboutDescriptor.versionText(
+                    language: language,
+                    versionLabel: appVersion
+                ),
+                action: nil
+            ),
+            MenuBarMenuItemDescriptor(
+                title: MenuBarAboutDescriptor.githubTitle(language: language),
+                action: .openGitHub,
+                iconAssetName: MenuBarAboutDescriptor.githubIconAssetName
             )
         ]
     }

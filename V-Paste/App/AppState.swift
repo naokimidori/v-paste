@@ -7,6 +7,7 @@ final class AppState: ObservableObject {
     @Published var isMonitoringPaused = false
     @Published var searchText = ""
     @Published var items: [ClipboardItem] = []
+    @Published private(set) var language: AppLanguage = .english
     @Published private(set) var groups: [ClipboardGroup]
     @Published private(set) var activeGroupID: ClipboardGroup.ID?
     @Published private(set) var panelViewModel: HistoryPanelViewModel
@@ -37,6 +38,13 @@ final class AppState: ObservableObject {
     func resumeMonitoring() {
         guard isMonitoringPaused else { return }
         isMonitoringPaused = false
+    }
+
+    func setLanguage(_ language: AppLanguage) {
+        guard self.language != language else { return }
+
+        self.language = language
+        panelViewModel.setLanguage(language)
     }
 
     @discardableResult
@@ -71,14 +79,14 @@ final class AppState: ObservableObject {
 
     @discardableResult
     func createGroup(
-        name: String = ClipboardGroup.defaultName,
+        name: String? = nil,
         colorHex: String? = nil
     ) -> ClipboardGroup {
         let colorHex = colorHex ?? ClipboardGroupColorPalette.firstUnusedColor(
             usedColorHexes: groups.map(\.colorHex)
         )
         let group = ClipboardGroup(
-            name: name,
+            name: name ?? ClipboardGroup.defaultName(language: language),
             colorHex: colorHex,
             createdAt: Date(),
             sortOrder: (groups.map(\.sortOrder).max() ?? -1) + 1

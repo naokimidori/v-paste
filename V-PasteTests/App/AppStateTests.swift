@@ -77,6 +77,16 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(secondGroup.colorHex, ClipboardGroupColorPalette.hexValues[1])
     }
 
+    func testCreateGroupUsesCurrentLanguageForDefaultName() {
+        let state = AppState.preview()
+
+        state.setLanguage(.simplifiedChinese)
+        let group = state.createGroup()
+
+        XCTAssertEqual(group.name, "未命名")
+        XCTAssertEqual(state.groups.last?.name, "未命名")
+    }
+
     func testUpdateGroupReplacesExistingGroup() throws {
         let state = AppState.preview()
         let group = state.createGroup(name: "Work", colorHex: "#4B8DFF")
@@ -415,7 +425,7 @@ final class AppStateTests: XCTestCase {
         let state = AppState.preview()
         let copiedAt = Date(timeIntervalSince1970: 3)
         let item = ClipboardItem.text(
-            plainText: "https://example.com/pricing/pro-plan",
+            plainText: "https://platform.minimaxi.com/user-center/payment/token-plan",
             copiedAt: copiedAt,
             sourceApplication: ClipboardSourceApplication(
                 name: "Google Chrome",
@@ -427,22 +437,22 @@ final class AppStateTests: XCTestCase {
 
         let updated = state.updateLinkPreview(
             sourceHash: item.sourceHash,
-            title: "Example Pricing Portal",
-            assetPath: "/tmp/example-logo.png",
-            thumbnailPath: "/tmp/example-thumb.png"
+            title: "MiniMax-与用户共创智能",
+            assetPath: "/tmp/minimax-logo.png",
+            thumbnailPath: "/tmp/minimax-thumb.png"
         )
 
         XCTAssertEqual(updated?.id, item.id)
-        XCTAssertEqual(updated?.displayTitle, "Example Pricing Portal")
+        XCTAssertEqual(updated?.displayTitle, "MiniMax-与用户共创智能")
         XCTAssertEqual(updated?.plainText, item.plainText)
         XCTAssertEqual(updated?.urlString, item.urlString)
-        XCTAssertEqual(updated?.assetPath, "/tmp/example-logo.png")
-        XCTAssertEqual(updated?.thumbnailPath, "/tmp/example-thumb.png")
+        XCTAssertEqual(updated?.assetPath, "/tmp/minimax-logo.png")
+        XCTAssertEqual(updated?.thumbnailPath, "/tmp/minimax-thumb.png")
         XCTAssertEqual(updated?.createdAt, copiedAt)
         XCTAssertEqual(updated?.lastCopiedAt, copiedAt)
         XCTAssertTrue(updated?.isFavorited == true)
         XCTAssertEqual(updated?.sourceAppName, "Google Chrome")
-        XCTAssertEqual(state.panelViewModel.filteredItems.first?.displayTitle, "Example Pricing Portal")
+        XCTAssertEqual(state.panelViewModel.filteredItems.first?.displayTitle, "MiniMax-与用户共创智能")
     }
 
     func testToggleFavoriteUpdatesItemsAndPanelViewModel() {
