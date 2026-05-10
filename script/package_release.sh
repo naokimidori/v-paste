@@ -49,7 +49,7 @@ VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$STAG
 BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$STAGED_APP/Contents/Info.plist" 2>/dev/null || true)"
 VERSION="${VERSION:-1.0.1}"
 BUILD="${BUILD:-1}"
-ARTIFACT_BASENAME="$APP_NAME-$VERSION-$BUILD-macOS"
+ARTIFACT_BASENAME="$APP_NAME-$VERSION-macOS"
 ZIP_PATH="$DIST_DIR/$ARTIFACT_BASENAME.zip"
 DMG_PATH="$DIST_DIR/$ARTIFACT_BASENAME.dmg"
 
