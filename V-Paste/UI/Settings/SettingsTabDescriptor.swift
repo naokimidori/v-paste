@@ -241,10 +241,6 @@ struct SettingsPreferenceDescriptor: Equatable {
             SettingsPreferenceDescriptor(
                 title: language == .english ? "Language" : "语言",
                 detail: language.title
-            ),
-            SettingsPreferenceDescriptor(
-                title: language == .english ? "About V-Paste" : "关于 V-Paste",
-                detail: "Debug"
             )
         ]
     }
@@ -254,22 +250,82 @@ struct SettingsTabDescriptor: Equatable, Identifiable {
     enum ID: String, Hashable {
         case general
         case ignoredApplications
+        case about
     }
 
     let id: ID
     let title: String
+    let systemImageName: String
 
     static func all(language: AppLanguage) -> [SettingsTabDescriptor] {
         [
             SettingsTabDescriptor(
                 id: .general,
-                title: language == .english ? "General" : "通用"
+                title: language == .english ? "General" : "通用",
+                systemImageName: "gearshape"
             ),
             SettingsTabDescriptor(
                 id: .ignoredApplications,
-                title: SettingsIgnoredAppsDescriptor.title(language: language)
+                title: SettingsIgnoredAppsDescriptor.title(language: language),
+                systemImageName: "hand.raised"
+            ),
+            SettingsTabDescriptor(
+                id: .about,
+                title: SettingsAboutDescriptor.title(language: language),
+                systemImageName: "info.circle"
             )
         ]
+    }
+}
+
+enum SettingsAboutDescriptor {
+    static let fallbackAppName = "V-Paste"
+    static let repositoryURL = MenuBarAboutDescriptor.repositoryURL
+    static let githubIconAssetName = MenuBarAboutDescriptor.githubIconAssetName
+
+    static var repositoryDisplayText: String {
+        repositoryURL.absoluteString
+            .replacingOccurrences(of: "https://", with: "")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+    }
+
+    static func title(language: AppLanguage) -> String {
+        language == .english ? "About" : "关于"
+    }
+
+    static func appName(bundle: Bundle = .main) -> String {
+        appName(info: bundle.infoDictionary)
+    }
+
+    static func appName(info: [String: Any]?) -> String {
+        normalizedInfoString(info?["CFBundleDisplayName"])
+            ?? normalizedInfoString(info?["CFBundleName"])
+            ?? fallbackAppName
+    }
+
+    static func versionText(
+        language: AppLanguage,
+        versionLabel: String = MenuBarAboutDescriptor.currentVersionLabel()
+    ) -> String {
+        MenuBarAboutDescriptor.versionText(
+            language: language,
+            versionLabel: versionLabel
+        )
+    }
+
+    static func repositoryTitle(language: AppLanguage) -> String {
+        MenuBarAboutDescriptor.githubTitle(language: language)
+    }
+
+    static func githubHelpTitle(language: AppLanguage) -> String {
+        language == .english ? "Open GitHub Repository" : "打开 GitHub 仓库"
+    }
+
+    private static func normalizedInfoString(_ value: Any?) -> String? {
+        guard let string = value as? String else { return nil }
+
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }
 

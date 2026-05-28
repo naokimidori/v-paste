@@ -8,6 +8,13 @@ enum SettingsViewLayoutMetrics {
     static let topPadding: CGFloat = 8
     static let bottomPadding: CGFloat = 8
     static let tabSwitcherHeight: CGFloat = 28
+    static let tabSwitcherCornerRadius: CGFloat = 8
+    static let tabItemCornerRadius: CGFloat = 6
+    static let tabSwitcherInnerPadding: CGFloat = 3
+    static let tabSwitcherItemSpacing: CGFloat = 3
+    static let tabIconSize: CGFloat = 13
+    static let tabFontSize: CGFloat = 13
+    static let tabAnimationDuration: Double = 0.14
     static let tabSwitcherBottomSpacing: CGFloat = 12
     static let groupTopPadding: CGFloat = 10
     static let groupBottomPadding: CGFloat = 10
@@ -29,6 +36,12 @@ enum SettingsViewLayoutMetrics {
     static let ignoredAppsButtonRowHeight: CGFloat = 24
     static let valueRowHeight: CGFloat = 26
     static let clearHistoryButtonRowHeight: CGFloat = 28
+    static let aboutHeaderUsesCenteredBranding = true
+    static let aboutGitHubShowsRepositoryText = false
+    static let aboutIconSize: CGFloat = 78
+    static let aboutContentHeight: CGFloat = 226
+    static let aboutGitHubButtonSize: CGFloat = 34
+    static let aboutGitHubIconSize: CGFloat = 18
     static let usesManualTabSwitcher = true
     static let drawsGroupBorder = false
 
@@ -43,9 +56,8 @@ enum SettingsViewLayoutMetrics {
         + retentionRowHeight
         + languageRowHeight
         + dividerHeight
-        + valueRowHeight
         + clearHistoryButtonRowHeight
-        + groupRowSpacing * 9
+        + groupRowSpacing * 8
 
     static let minimumHeightForIgnoredApplicationsTab: CGFloat =
         topPadding + bottomPadding
@@ -57,6 +69,12 @@ enum SettingsViewLayoutMetrics {
         + ignoredAppsListHeight
         + ignoredAppsButtonRowHeight
         + 10 * 4
+
+    static let minimumHeightForAboutTab: CGFloat =
+        topPadding + bottomPadding
+        + tabSwitcherHeight + tabSwitcherBottomSpacing
+        + groupTopPadding + groupBottomPadding
+        + aboutContentHeight
 }
 
 enum SettingsClearHistoryConfirmationDescriptor {
@@ -150,6 +168,8 @@ struct SettingsView: View {
                     generalTab(descriptors: SettingsPreferenceDescriptor.singleGroup(language: language))
                 case .ignoredApplications:
                     ignoredApplicationsTab(title: tabs[1].title)
+                case .about:
+                    aboutTab()
                 }
             }
         }
@@ -229,11 +249,6 @@ struct SettingsView: View {
 
                 SettingsDivider()
 
-                SettingsValueRow(
-                    title: descriptors[6].title,
-                    value: versionLabel
-                )
-
                 if let errorMessage {
                     Text(errorMessage)
                         .font(.caption)
@@ -275,21 +290,26 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    private var versionLabel: String {
-        let info = Bundle.main.infoDictionary
-        let version = info?["CFBundleShortVersionString"] as? String
-        let build = info?["CFBundleVersion"] as? String
-
-        switch (version, build) {
-        case let (.some(version), .some(build)):
-            return "\(version) (\(build))"
-        case let (.some(version), .none):
-            return version
-        case let (.none, .some(build)):
-            return build
-        case (.none, .none):
-            return SettingsPreferenceDescriptor.singleGroup(language: language)[6].detail ?? "Debug"
+    private func aboutTab() -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SettingsSingleGroup {
+                SettingsAboutContent(
+                    appName: SettingsAboutDescriptor.appName(),
+                    versionText: SettingsAboutDescriptor.versionText(
+                        language: language,
+                        versionLabel: versionLabel
+                    ),
+                    repositoryURL: SettingsAboutDescriptor.repositoryURL,
+                    githubHelpTitle: SettingsAboutDescriptor.githubHelpTitle(language: language),
+                    githubIconAssetName: SettingsAboutDescriptor.githubIconAssetName
+                )
+            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private var versionLabel: String {
+        MenuBarAboutDescriptor.currentVersionLabel()
     }
 
     private var launchAtLoginBinding: Binding<Bool> {
@@ -470,14 +490,88 @@ private struct SettingsTabSwitcher: View {
     @Binding var selection: SettingsTabDescriptor.ID
 
     var body: some View {
-        Picker("", selection: $selection) {
+        HStack(spacing: SettingsViewLayoutMetrics.tabSwitcherItemSpacing) {
             ForEach(tabs) { tab in
-                Text(tab.title).tag(tab.id)
+                SettingsTabButton(
+                    tab: tab,
+                    isSelected: selection == tab.id
+                ) {
+                    withAnimation(.easeInOut(duration: SettingsViewLayoutMetrics.tabAnimationDuration)) {
+                        selection = tab.id
+                    }
+                }
             }
         }
-        .labelsHidden()
-        .pickerStyle(.segmented)
+        .padding(SettingsViewLayoutMetrics.tabSwitcherInnerPadding)
         .frame(height: SettingsViewLayoutMetrics.tabSwitcherHeight)
+        .background(
+            RoundedRectangle(
+                cornerRadius: SettingsViewLayoutMetrics.tabSwitcherCornerRadius,
+                style: .continuous
+            )
+            .fill(Color(nsColor: .controlBackgroundColor).opacity(0.78))
+        )
+        .overlay(
+            RoundedRectangle(
+                cornerRadius: SettingsViewLayoutMetrics.tabSwitcherCornerRadius,
+                style: .continuous
+            )
+            .stroke(Color(nsColor: .separatorColor).opacity(0.45), lineWidth: 1)
+        )
+    }
+}
+
+private struct SettingsTabButton: View {
+    let tab: SettingsTabDescriptor
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label {
+                Text(tab.title)
+                    .font(.system(
+                        size: SettingsViewLayoutMetrics.tabFontSize,
+                        weight: isSelected ? .semibold : .medium
+                    ))
+                    .lineLimit(1)
+            } icon: {
+                Image(systemName: tab.systemImageName)
+                    .font(.system(
+                        size: SettingsViewLayoutMetrics.tabIconSize,
+                        weight: .semibold
+                    ))
+                    .symbolRenderingMode(.hierarchical)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, 10)
+            .foregroundStyle(isSelected ? Color.primary : Color.secondary)
+            .background(
+                RoundedRectangle(
+                    cornerRadius: SettingsViewLayoutMetrics.tabItemCornerRadius,
+                    style: .continuous
+                )
+                .fill(isSelected ? Color.accentColor.opacity(0.16) : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(
+                    cornerRadius: SettingsViewLayoutMetrics.tabItemCornerRadius,
+                    style: .continuous
+                )
+                .stroke(isSelected ? Color.accentColor.opacity(0.22) : Color.clear, lineWidth: 1)
+            )
+            .contentShape(
+                RoundedRectangle(
+                    cornerRadius: SettingsViewLayoutMetrics.tabItemCornerRadius,
+                    style: .continuous
+                )
+            )
+        }
+        .buttonStyle(.plain)
+        .animation(
+            .easeInOut(duration: SettingsViewLayoutMetrics.tabAnimationDuration),
+            value: isSelected
+        )
     }
 }
 
@@ -774,6 +868,69 @@ private struct SettingsIgnoredAppListRow: View {
 
         return NSImage(named: NSImage.applicationIconName)
             ?? NSWorkspace.shared.icon(for: .applicationBundle)
+    }
+}
+
+private struct SettingsAboutContent: View {
+    let appName: String
+    let versionText: String
+    let repositoryURL: URL
+    let githubHelpTitle: String
+    let githubIconAssetName: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Spacer(minLength: 0)
+
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(
+                    width: SettingsViewLayoutMetrics.aboutIconSize,
+                    height: SettingsViewLayoutMetrics.aboutIconSize
+                )
+
+            Text(appName)
+                .font(.system(size: 24, weight: .semibold))
+                .lineLimit(1)
+
+            Text(versionText)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Link(destination: repositoryURL) {
+                Image(githubIconAssetName)
+                    .resizable()
+                    .renderingMode(.template)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(
+                        width: SettingsViewLayoutMetrics.aboutGitHubIconSize,
+                        height: SettingsViewLayoutMetrics.aboutGitHubIconSize
+                    )
+                    .frame(
+                        width: SettingsViewLayoutMetrics.aboutGitHubButtonSize,
+                        height: SettingsViewLayoutMetrics.aboutGitHubButtonSize
+                    )
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color(nsColor: .quaternaryLabelColor).opacity(0.22))
+                    )
+                    .contentShape(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    )
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .help(githubHelpTitle)
+
+            Spacer(minLength: 0)
+        }
+        .frame(
+            maxWidth: .infinity,
+            minHeight: SettingsViewLayoutMetrics.aboutContentHeight,
+            alignment: .center
+        )
     }
 }
 

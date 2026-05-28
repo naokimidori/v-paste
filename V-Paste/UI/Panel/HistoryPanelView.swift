@@ -40,6 +40,27 @@ enum HistoryPanelScopeCopy {
     }
 }
 
+enum HistoryPanelTypeFilterCopy {
+    static func typeTitle(language: AppLanguage) -> String {
+        language == .english ? "Type" : "类型"
+    }
+
+    static func title(for filter: ClipboardContentFilter, language: AppLanguage) -> String {
+        switch filter {
+        case .all:
+            return language == .english ? "All" : "全部"
+        case .images:
+            return language == .english ? "Images" : "图片"
+        case .text:
+            return language == .english ? "Text" : "文本"
+        case .links:
+            return language == .english ? "Links" : "链接"
+        case .files:
+            return language == .english ? "Files" : "文件"
+        }
+    }
+}
+
 enum HistoryPanelEmptyStateCopy {
     static func title(
         searchText: String,
@@ -133,6 +154,32 @@ enum HistoryPanelSearchTransition {
 
 enum HistoryPanelSearchLayout {
     static let expandedWidth: CGFloat = 180
+}
+
+enum HistoryPanelTypeFilterLayout {
+    static let labelSpacing: CGFloat = 6
+    static let iconFontSize: CGFloat = 13
+    static let titleFontSize: CGFloat = iconFontSize
+    static let chevronFontSize: CGFloat = 10
+    static let chevronAnimationDuration: Double = 0.16
+    static let horizontalPadding: CGFloat = 10
+    static let controlHeight: CGFloat = 30
+
+    static var labelFont: Font {
+        .system(size: titleFontSize, weight: .semibold, design: .rounded)
+    }
+
+    static var chevronAnimation: Animation {
+        .easeInOut(duration: chevronAnimationDuration)
+    }
+
+    static func chevronRotationDegrees(isPresented: Bool) -> Double {
+        isPresented ? 180 : 0
+    }
+
+    static func menuPopupPoint(anchorHeight _: CGFloat) -> NSPoint {
+        NSPoint(x: 0, y: 0)
+    }
 }
 
 enum HistoryPanelSearchSelection {
@@ -394,6 +441,103 @@ struct HistoryPanelGroupNameTextField: NSViewRepresentable {
     }
 }
 
+struct HistoryPanelTypeFilterMenuAnchor: NSViewRepresentable {
+    @Binding var isPresented: Bool
+
+    let activeFilter: ClipboardContentFilter
+    let language: AppLanguage
+    let imageName: (ClipboardContentFilter) -> String
+    let onSelect: (ClipboardContentFilter) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    func makeNSView(context: Context) -> NSView {
+        NSView(frame: .zero)
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        context.coordinator.parent = self
+
+        guard isPresented, !context.coordinator.isMenuOpen else { return }
+
+        DispatchQueue.main.async { [weak nsView, weak coordinator = context.coordinator] in
+            guard let nsView,
+                  let coordinator,
+                  coordinator.parent.isPresented,
+                  !coordinator.isMenuOpen else {
+                return
+            }
+
+            coordinator.showMenu(from: nsView)
+        }
+    }
+
+    final class Coordinator: NSObject, NSMenuDelegate {
+        var parent: HistoryPanelTypeFilterMenuAnchor
+        var isMenuOpen = false
+
+        init(parent: HistoryPanelTypeFilterMenuAnchor) {
+            self.parent = parent
+        }
+
+        func showMenu(from nsView: NSView) {
+            isMenuOpen = true
+
+            let menu = NSMenu()
+            menu.delegate = self
+            for (index, filter) in ClipboardContentFilter.allCases.enumerated() {
+                let item = NSMenuItem(
+                    title: HistoryPanelTypeFilterCopy.title(
+                        for: filter,
+                        language: parent.language
+                    ),
+                    action: #selector(selectFilter(_:)),
+                    keyEquivalent: ""
+                )
+                item.target = self
+                item.tag = index
+                item.image = NSImage(
+                    systemSymbolName: parent.imageName(filter),
+                    accessibilityDescription: nil
+                )
+                menu.addItem(item)
+            }
+
+            menu.popUp(
+                positioning: nil,
+                at: HistoryPanelTypeFilterLayout.menuPopupPoint(
+                    anchorHeight: nsView.bounds.height
+                ),
+                in: nsView
+            )
+            closeMenuIfNeeded()
+        }
+
+        @objc private func selectFilter(_ sender: NSMenuItem) {
+            guard ClipboardContentFilter.allCases.indices.contains(sender.tag) else { return }
+
+            parent.onSelect(ClipboardContentFilter.allCases[sender.tag])
+        }
+
+        func menuDidClose(_ menu: NSMenu) {
+            closeMenuIfNeeded()
+        }
+
+        private func closeMenuIfNeeded() {
+            guard isMenuOpen else { return }
+
+            isMenuOpen = false
+            DispatchQueue.main.async { [parent] in
+                withAnimation(HistoryPanelTypeFilterLayout.chevronAnimation) {
+                    parent.isPresented = false
+                }
+            }
+        }
+    }
+}
+
 enum HistoryPanelGroupStripLayout {
     static let pillSpacing: CGFloat = 7
     static let createButtonSpacing: CGFloat = pillSpacing
@@ -477,6 +621,7 @@ struct HistoryPanelView: View {
     @State private var colorPickerGroupID: ClipboardGroup.ID?
     @State private var editingGroupName = ""
     @State private var editingGroupColorHex = ClipboardGroup.defaultColorHex
+    @State private var isTypeFilterMenuPresented = false
 
     private static let cardStripCoordinateSpace = "HistoryPanelCardStrip"
 
@@ -637,6 +782,24 @@ struct HistoryPanelView: View {
         title: String,
         descriptor: MenuBarMenuItemDescriptor
     ) -> some View {
+        if let shortcutDisplay = descriptor.shortcutDisplay,
+           descriptor.keyEquivalent.isEmpty {
+            HStack(spacing: 12) {
+                overflowMenuPrimaryLabel(title: title, descriptor: descriptor)
+                Spacer(minLength: 18)
+                Text(shortcutDisplay)
+                    .foregroundStyle(.secondary)
+            }
+        } else {
+            overflowMenuPrimaryLabel(title: title, descriptor: descriptor)
+        }
+    }
+
+    @ViewBuilder
+    private func overflowMenuPrimaryLabel(
+        title: String,
+        descriptor: MenuBarMenuItemDescriptor
+    ) -> some View {
         if let iconAssetName = descriptor.iconAssetName {
             Label {
                 Text(title)
@@ -690,6 +853,8 @@ struct HistoryPanelView: View {
 
             createGroupButton
 
+            typeFilterMenu
+
             favoriteScopeControl
         }
     }
@@ -707,6 +872,8 @@ struct HistoryPanelView: View {
             groupStrip(maxWidth: 300)
 
             createGroupButton
+
+            typeFilterMenu
         }
     }
 
@@ -885,6 +1052,89 @@ struct HistoryPanelView: View {
         .help(title)
         .accessibilityLabel(title)
         .accessibilityAddTraits(isActive ? [.isSelected] : [])
+    }
+
+    private var typeFilterMenu: some View {
+        Button {
+            withAnimation(HistoryPanelTypeFilterLayout.chevronAnimation) {
+                isTypeFilterMenuPresented = true
+            }
+        } label: {
+            HStack(spacing: HistoryPanelTypeFilterLayout.labelSpacing) {
+                Image(systemName: typeFilterSystemImage(for: viewModel.activeContentFilter))
+
+                Text(
+                    HistoryPanelTypeFilterCopy.title(
+                        for: viewModel.activeContentFilter,
+                        language: viewModel.language
+                    )
+                )
+                .lineLimit(1)
+
+                Image(systemName: "chevron.down")
+                    .font(.system(
+                        size: HistoryPanelTypeFilterLayout.chevronFontSize,
+                        weight: .bold
+                    ))
+                    .rotationEffect(.degrees(
+                        HistoryPanelTypeFilterLayout.chevronRotationDegrees(
+                            isPresented: isTypeFilterMenuPresented
+                        )
+                    ))
+                    .animation(
+                        HistoryPanelTypeFilterLayout.chevronAnimation,
+                        value: isTypeFilterMenuPresented
+                    )
+            }
+            .font(HistoryPanelTypeFilterLayout.labelFont)
+            .foregroundStyle(viewModel.activeContentFilter == .all ? .secondary : .primary)
+            .padding(.horizontal, HistoryPanelTypeFilterLayout.horizontalPadding)
+            .frame(height: HistoryPanelTypeFilterLayout.controlHeight)
+            .background {
+                Capsule()
+                    .fill(
+                        viewModel.activeContentFilter == .all
+                            ? Color(nsColor: .separatorColor).opacity(0.16)
+                            : Color(nsColor: .controlAccentColor).opacity(0.16)
+                    )
+            }
+            .contentShape(Capsule())
+            .background {
+                HistoryPanelTypeFilterMenuAnchor(
+                    isPresented: $isTypeFilterMenuPresented,
+                    activeFilter: viewModel.activeContentFilter,
+                    language: viewModel.language,
+                    imageName: typeFilterSystemImage(for:),
+                    onSelect: { filter in
+                        viewModel.setActiveContentFilter(filter)
+                    }
+                )
+            }
+        }
+        .buttonStyle(.plain)
+        .help(HistoryPanelTypeFilterCopy.typeTitle(language: viewModel.language))
+        .accessibilityLabel(HistoryPanelTypeFilterCopy.typeTitle(language: viewModel.language))
+        .accessibilityValue(
+            HistoryPanelTypeFilterCopy.title(
+                for: viewModel.activeContentFilter,
+                language: viewModel.language
+            )
+        )
+    }
+
+    private func typeFilterSystemImage(for filter: ClipboardContentFilter) -> String {
+        switch filter {
+        case .all:
+            return "line.3.horizontal.decrease.circle"
+        case .images:
+            return "photo"
+        case .text:
+            return "text.alignleft"
+        case .links:
+            return "link"
+        case .files:
+            return "doc"
+        }
     }
 
     private var searchField: some View {

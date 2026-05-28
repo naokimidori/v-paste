@@ -16,6 +16,33 @@ final class HistoryPanelViewModelTests: XCTestCase {
         XCTAssertEqual(HistoryCardLayout.cardHeight, HistoryCardLayout.cardWidth)
     }
 
+    func testTypeFilterPillUsesUnifiedIconAndTextFontSize() {
+        XCTAssertEqual(
+            HistoryPanelTypeFilterLayout.iconFontSize,
+            HistoryPanelTypeFilterLayout.titleFontSize
+        )
+    }
+
+    func testTypeFilterChevronRotatesWhenMenuIsPresented() {
+        XCTAssertEqual(
+            HistoryPanelTypeFilterLayout.chevronRotationDegrees(isPresented: false),
+            0
+        )
+        XCTAssertEqual(
+            HistoryPanelTypeFilterLayout.chevronRotationDegrees(isPresented: true),
+            180
+        )
+        XCTAssertGreaterThan(HistoryPanelTypeFilterLayout.chevronAnimationDuration, 0)
+    }
+
+    func testTypeFilterMenuPopupAnchorsToControlBottomEdge() {
+        let point = HistoryPanelTypeFilterLayout.menuPopupPoint(anchorHeight: 30)
+
+        XCTAssertEqual(point.x, 0)
+        XCTAssertEqual(point.y, 0)
+        XCTAssertLessThan(point.y, 30)
+    }
+
     func testImageCardFooterUsesSharedBottomPadding() {
         XCTAssertEqual(
             HistoryCardLayout.imageFooterBottomPadding,
@@ -590,6 +617,18 @@ final class HistoryPanelViewModelTests: XCTestCase {
         XCTAssertEqual(HistoryPanelScopeCopy.favoritesTitle(language: .simplifiedChinese), "收藏")
         XCTAssertEqual(HistoryPanelScopeCopy.clipboardScopeTitle(language: .english), "Clipboard scope")
         XCTAssertEqual(HistoryPanelScopeCopy.clipboardScopeTitle(language: .simplifiedChinese), "剪贴板范围")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.typeTitle(language: .english), "Type")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.typeTitle(language: .simplifiedChinese), "类型")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.title(for: .all, language: .english), "All")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.title(for: .images, language: .english), "Images")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.title(for: .text, language: .english), "Text")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.title(for: .links, language: .english), "Links")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.title(for: .files, language: .english), "Files")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.title(for: .all, language: .simplifiedChinese), "全部")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.title(for: .images, language: .simplifiedChinese), "图片")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.title(for: .text, language: .simplifiedChinese), "文本")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.title(for: .links, language: .simplifiedChinese), "链接")
+        XCTAssertEqual(HistoryPanelTypeFilterCopy.title(for: .files, language: .simplifiedChinese), "文件")
     }
 
     func testPanelGroupCopyUsesRequestedLanguage() {
@@ -1132,6 +1171,148 @@ final class HistoryPanelViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.filteredItems, [workMatch])
     }
 
+    func testContentFilterDefaultsToAll() {
+        let text = makeItem(
+            sourceHash: "text",
+            displayTitle: "Text",
+            plainText: "Plain"
+        )
+        let viewModel = HistoryPanelViewModel(items: [text])
+
+        XCTAssertEqual(viewModel.activeContentFilter, .all)
+        XCTAssertEqual(viewModel.filteredItems, [text])
+    }
+
+    func testContentFilterSeparatesImagesTextLinksAndFiles() {
+        let image = makeItem(
+            contentType: .image,
+            sourceHash: "image",
+            displayTitle: "Image",
+            plainText: nil
+        )
+        let text = makeItem(
+            contentType: .text,
+            sourceHash: "text",
+            displayTitle: "Text",
+            plainText: "Plain text"
+        )
+        let link = makeItem(
+            contentType: .text,
+            sourceHash: "link",
+            displayTitle: "Link",
+            plainText: "https://example.com",
+            urlString: "https://example.com"
+        )
+        let file = makeItem(
+            contentType: .file,
+            sourceHash: "file",
+            displayTitle: "File",
+            plainText: nil,
+            fileName: "report.pdf"
+        )
+        let viewModel = HistoryPanelViewModel(items: [image, text, link, file])
+
+        viewModel.setActiveContentFilter(.images)
+        XCTAssertEqual(viewModel.filteredItems, [image])
+
+        viewModel.setActiveContentFilter(.text)
+        XCTAssertEqual(viewModel.filteredItems, [text])
+
+        viewModel.setActiveContentFilter(.links)
+        XCTAssertEqual(viewModel.filteredItems, [link])
+
+        viewModel.setActiveContentFilter(.files)
+        XCTAssertEqual(viewModel.filteredItems, [file])
+    }
+
+    func testContentFilterCombinesWithSearchText() {
+        let imageMatch = makeItem(
+            contentType: .image,
+            sourceHash: "image-match",
+            displayTitle: "Needle Image",
+            plainText: nil
+        )
+        let textMatch = makeItem(
+            contentType: .text,
+            sourceHash: "text-match",
+            displayTitle: "Needle Text",
+            plainText: "Needle"
+        )
+        let imageMiss = makeItem(
+            contentType: .image,
+            sourceHash: "image-miss",
+            displayTitle: "Other Image",
+            plainText: nil
+        )
+        let viewModel = HistoryPanelViewModel(items: [imageMatch, textMatch, imageMiss])
+
+        viewModel.setActiveContentFilter(.images)
+        viewModel.updateSearchText("needle")
+
+        XCTAssertEqual(viewModel.filteredItems, [imageMatch])
+    }
+
+    func testContentFilterCombinesWithActiveGroup() {
+        let workID = UUID()
+        let personalID = UUID()
+        let workImage = makeItem(
+            contentType: .image,
+            sourceHash: "work-image",
+            displayTitle: "Work Image",
+            plainText: nil,
+            groupID: workID
+        )
+        let personalImage = makeItem(
+            contentType: .image,
+            sourceHash: "personal-image",
+            displayTitle: "Personal Image",
+            plainText: nil,
+            groupID: personalID
+        )
+        let workText = makeItem(
+            contentType: .text,
+            sourceHash: "work-text",
+            displayTitle: "Work Text",
+            plainText: "Work",
+            groupID: workID
+        )
+        let viewModel = HistoryPanelViewModel(items: [workImage, personalImage, workText])
+
+        viewModel.setActiveGroup(workID)
+        viewModel.setActiveContentFilter(.images)
+
+        XCTAssertEqual(viewModel.filteredItems, [workImage])
+    }
+
+    func testChangingContentFilterResetsSelectionToFirstVisibleItem() {
+        let firstImage = makeItem(
+            contentType: .image,
+            sourceHash: "first-image",
+            displayTitle: "First Image",
+            plainText: nil
+        )
+        let text = makeItem(
+            contentType: .text,
+            sourceHash: "text",
+            displayTitle: "Text",
+            plainText: "Text"
+        )
+        let secondImage = makeItem(
+            contentType: .image,
+            sourceHash: "second-image",
+            displayTitle: "Second Image",
+            plainText: nil
+        )
+        let viewModel = HistoryPanelViewModel(items: [firstImage, text, secondImage])
+        viewModel.moveSelection(delta: 2)
+
+        viewModel.setActiveContentFilter(.images)
+
+        XCTAssertEqual(viewModel.filteredItems, [firstImage, secondImage])
+        XCTAssertEqual(viewModel.selectedIndex, 0)
+        XCTAssertEqual(viewModel.selectedItem, firstImage)
+    }
+
     func testUpdateItemsRepairsSelectionToNearestRemainingVisibleItem() {
         let groupID = UUID()
         let first = makeItem(
@@ -1298,7 +1479,7 @@ final class HistoryPanelViewModelTests: XCTestCase {
             "Show V-Paste",
             nil,
             "Preferences...",
-            "About V-Paste",
+            "About",
             nil,
             "Quit"
         ])
@@ -1322,7 +1503,7 @@ final class HistoryPanelViewModelTests: XCTestCase {
             "显示 V-Paste",
             nil,
             "偏好设置...",
-            "关于 V-Paste",
+            "关于",
             nil,
             "退出"
         ])
@@ -1369,7 +1550,7 @@ final class HistoryPanelViewModelTests: XCTestCase {
 
         XCTAssertEqual(items.map(\.title), [
             "Preferences...",
-            "About V-Paste",
+            "About",
             nil,
             "Quit"
         ])
@@ -1387,55 +1568,36 @@ final class HistoryPanelViewModelTests: XCTestCase {
             appName: "V-Paste",
             language: .simplifiedChinese,
             shortcut: .defaultShowPanel,
-            appVersion: "1.0.1"
+            appVersion: "1.1.0"
         )
 
         XCTAssertEqual(items.map(\.title), [
             "偏好设置...",
-            "关于 V-Paste",
+            "关于",
             nil,
             "退出"
         ])
         XCTAssertEqual(items[1].children.map(\.title), [
-            "版本 1.0.1",
-            "GitHub 仓库"
         ])
-        XCTAssertEqual(items[1].children.map(\.action), [
-            nil,
-            .openGitHub
-        ])
-        XCTAssertEqual(
-            items[1].children[1].iconAssetName,
-            MenuBarAboutDescriptor.githubIconAssetName
-        )
+        XCTAssertEqual(items[1].shortcutDisplay, "1.1.0")
         XCTAssertEqual(
             MenuBarAboutDescriptor.repositoryURL.absoluteString,
             "https://github.com/naokimidori/v-paste"
         )
     }
 
-    func testMenuBarAboutDescriptorUsesVersionAndGitHubAction() throws {
+    func testMenuBarAboutDescriptorShowsVersionInlineWithoutSubmenu() throws {
         let items = MenuBarMenuDescriptor.items(
             appName: "V-Paste",
             language: .english,
             shortcut: .defaultShowPanel,
-            appVersion: "1.0.1"
+            appVersion: "1.1.0"
         )
 
         let aboutItem = try XCTUnwrap(items.first { $0.action == .openAbout })
-        XCTAssertEqual(aboutItem.title, "About V-Paste")
-        XCTAssertEqual(aboutItem.children.map(\.title), [
-            "Version 1.0.1",
-            "GitHub Repository"
-        ])
-        XCTAssertEqual(aboutItem.children.map(\.action), [
-            nil,
-            .openGitHub
-        ])
-        XCTAssertEqual(
-            aboutItem.children[1].iconAssetName,
-            MenuBarAboutDescriptor.githubIconAssetName
-        )
+        XCTAssertEqual(aboutItem.title, "About")
+        XCTAssertEqual(aboutItem.shortcutDisplay, "1.1.0")
+        XCTAssertTrue(aboutItem.children.isEmpty)
     }
 
     func testHistoryPanelViewModelKeepsCurrentLanguageForOverflowMenu() {
@@ -1454,7 +1616,7 @@ final class HistoryPanelViewModelTests: XCTestCase {
             ).map(\.title),
             [
                 "偏好设置...",
-                "关于 V-Paste",
+                "关于",
                 nil,
                 "退出"
             ]
@@ -1476,8 +1638,7 @@ final class HistoryPanelViewModelTests: XCTestCase {
             "Monitor Clipboard",
             "Show V-Paste",
             "History Retention",
-            "Language",
-            "About V-Paste"
+            "Language"
         ])
         XCTAssertEqual(SettingsPreferenceDescriptor.singleGroup(language: .english).map(\.detail), [
             nil,
@@ -1485,8 +1646,7 @@ final class HistoryPanelViewModelTests: XCTestCase {
             nil,
             "⌥~",
             "30 days",
-            "English",
-            "Debug"
+            "English"
         ])
     }
 
@@ -1497,8 +1657,7 @@ final class HistoryPanelViewModelTests: XCTestCase {
             "监听剪贴板",
             "显示 V-Paste",
             "历史记录有效期",
-            "语言",
-            "关于 V-Paste"
+            "语言"
         ])
         XCTAssertEqual(SettingsPreferenceDescriptor.singleGroup(language: .simplifiedChinese).map(\.detail), [
             nil,
@@ -1506,20 +1665,80 @@ final class HistoryPanelViewModelTests: XCTestCase {
             nil,
             "⌥~",
             "30 天",
-            "简体中文",
-            "Debug"
+            "简体中文"
         ])
     }
 
     func testSettingsTabsSeparateApplicationIgnoreGroup() {
+        XCTAssertEqual(SettingsTabDescriptor.all(language: .english).map(\.id), [
+            .general,
+            .ignoredApplications,
+            .about
+        ])
         XCTAssertEqual(SettingsTabDescriptor.all(language: .english).map(\.title), [
             "General",
-            "App Ignore"
+            "App Ignore",
+            "About"
         ])
         XCTAssertEqual(SettingsTabDescriptor.all(language: .simplifiedChinese).map(\.title), [
             "通用",
-            "应用忽略"
+            "应用忽略",
+            "关于"
         ])
+        XCTAssertEqual(SettingsTabDescriptor.all(language: .english).map(\.systemImageName), [
+            "gearshape",
+            "hand.raised",
+            "info.circle"
+        ])
+    }
+
+    func testSettingsAboutDescriptorUsesAppMetadataAndRepository() {
+        XCTAssertEqual(SettingsAboutDescriptor.title(language: .english), "About")
+        XCTAssertEqual(SettingsAboutDescriptor.title(language: .simplifiedChinese), "关于")
+        XCTAssertEqual(SettingsAboutDescriptor.appName(info: ["CFBundleDisplayName": "Custom Paste"]), "Custom Paste")
+        XCTAssertEqual(SettingsAboutDescriptor.appName(info: ["CFBundleName": "Bundle Paste"]), "Bundle Paste")
+        XCTAssertEqual(SettingsAboutDescriptor.appName(info: [:]), "V-Paste")
+        XCTAssertEqual(SettingsAboutDescriptor.repositoryTitle(language: .english), "GitHub Repository")
+        XCTAssertEqual(SettingsAboutDescriptor.repositoryTitle(language: .simplifiedChinese), "GitHub 仓库")
+        XCTAssertEqual(SettingsAboutDescriptor.githubHelpTitle(language: .english), "Open GitHub Repository")
+        XCTAssertEqual(SettingsAboutDescriptor.githubHelpTitle(language: .simplifiedChinese), "打开 GitHub 仓库")
+        XCTAssertEqual(SettingsAboutDescriptor.repositoryURL, MenuBarAboutDescriptor.repositoryURL)
+    }
+
+    func testMenuBarAboutDescriptorFormatsReleaseAndDevelopmentVersionLabels() {
+        let info = [
+            "CFBundleShortVersionString": "1.1.0",
+            "CFBundleVersion": "1"
+        ]
+
+        XCTAssertEqual(
+            MenuBarAboutDescriptor.currentVersionLabel(info: info, isDevelopmentBuild: false),
+            "1.1.0"
+        )
+        XCTAssertEqual(
+            MenuBarAboutDescriptor.currentVersionLabel(info: info, isDevelopmentBuild: true),
+            "1.1.0-dev"
+        )
+        XCTAssertEqual(
+            MenuBarAboutDescriptor.currentVersionLabel(
+                info: ["CFBundleShortVersionString": "1.1.0-dev"],
+                isDevelopmentBuild: true
+            ),
+            "1.1.0-dev"
+        )
+    }
+
+    func testMenuBarAboutDescriptorStandardPanelOptionsSuppressBuildVersion() {
+        let options = MenuBarAboutDescriptor.standardPanelOptions(versionLabel: "1.1.0")
+
+        XCTAssertEqual(
+            options[.applicationVersion] as? String,
+            "1.1.0"
+        )
+        XCTAssertEqual(
+            options[.version] as? String,
+            ""
+        )
     }
 
     func testIgnoredApplicationsUseVerticalListMetrics() {
@@ -1728,6 +1947,18 @@ final class HistoryPanelViewModelTests: XCTestCase {
 
     func testSettingsViewUsesManualTabSwitcherToAvoidNativeTabContainerCycle() {
         XCTAssertTrue(SettingsViewLayoutMetrics.usesManualTabSwitcher)
+        XCTAssertEqual(SettingsViewLayoutMetrics.tabSwitcherCornerRadius, 8)
+        XCTAssertEqual(SettingsViewLayoutMetrics.tabItemCornerRadius, 6)
+        XCTAssertEqual(SettingsViewLayoutMetrics.tabIconSize, 13)
+        XCTAssertEqual(SettingsViewLayoutMetrics.tabFontSize, 13)
+    }
+
+    func testSettingsAboutLayoutUsesCenteredBrandingAndIconOnlyGitHubAction() {
+        XCTAssertTrue(SettingsViewLayoutMetrics.aboutHeaderUsesCenteredBranding)
+        XCTAssertFalse(SettingsViewLayoutMetrics.aboutGitHubShowsRepositoryText)
+        XCTAssertEqual(SettingsViewLayoutMetrics.aboutIconSize, 78)
+        XCTAssertEqual(SettingsViewLayoutMetrics.aboutGitHubButtonSize, 34)
+        XCTAssertEqual(SettingsViewLayoutMetrics.aboutGitHubIconSize, 18)
     }
 
     func testSettingsPanelHeightKeepsClearHistoryButtonVisible() {
@@ -1742,6 +1973,13 @@ final class HistoryPanelViewModelTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(
             SettingsPanelDescriptor.contentSize.height,
             SettingsViewLayoutMetrics.minimumHeightForIgnoredApplicationsTab
+        )
+    }
+
+    func testSettingsPanelHeightFitsAboutTab() {
+        XCTAssertGreaterThanOrEqual(
+            SettingsPanelDescriptor.contentSize.height,
+            SettingsViewLayoutMetrics.minimumHeightForAboutTab
         )
     }
 
@@ -1768,6 +2006,7 @@ final class HistoryPanelViewModelTests: XCTestCase {
 }
 
 private func makeItem(
+    contentType: ClipboardContentType = .text,
     sourceHash: String,
     displayTitle: String,
     plainText: String?,
@@ -1778,7 +2017,7 @@ private func makeItem(
 ) -> ClipboardItem {
     ClipboardItem(
         id: UUID(),
-        contentType: .text,
+        contentType: contentType,
         sourceHash: sourceHash,
         displayTitle: displayTitle,
         plainText: plainText,

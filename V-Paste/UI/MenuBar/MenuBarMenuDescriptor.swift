@@ -61,6 +61,13 @@ struct MenuBarMenuItemDescriptor: Equatable {
 enum MenuBarAboutDescriptor {
     static let repositoryURL = URL(string: "https://github.com/naokimidori/v-paste")!
     static let githubIconAssetName = "GitHubIcon"
+    static var isDevelopmentBuild: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
 
     static func versionText(
         language: AppLanguage,
@@ -75,19 +82,48 @@ enum MenuBarAboutDescriptor {
         language == .english ? "GitHub Repository" : "GitHub 仓库"
     }
 
-    static func currentVersionLabel(bundle: Bundle = .main) -> String {
-        let info = bundle.infoDictionary
-        let version = info?["CFBundleShortVersionString"] as? String
-        let build = info?["CFBundleVersion"] as? String
+    static func currentVersionLabel(
+        bundle: Bundle = .main,
+        isDevelopmentBuild: Bool = Self.isDevelopmentBuild
+    ) -> String {
+        currentVersionLabel(
+            info: bundle.infoDictionary,
+            isDevelopmentBuild: isDevelopmentBuild
+        )
+    }
 
-        switch (version, build) {
-        case let (.some(version), .some(build)) where !build.isEmpty:
-            return "\(version) (\(build))"
-        case let (.some(version), _):
-            return version
-        default:
-            return "Debug"
+    static func currentVersionLabel(
+        info: [String: Any]?,
+        isDevelopmentBuild: Bool
+    ) -> String {
+        let version = normalizedInfoString(info?["CFBundleShortVersionString"])
+        let build = normalizedInfoString(info?["CFBundleVersion"])
+        let baseVersion = version ?? build ?? "Debug"
+
+        guard isDevelopmentBuild,
+              baseVersion != "Debug",
+              !baseVersion.hasSuffix("-dev")
+        else {
+            return baseVersion
         }
+
+        return "\(baseVersion)-dev"
+    }
+
+    static func standardPanelOptions(
+        versionLabel: String = currentVersionLabel()
+    ) -> [NSApplication.AboutPanelOptionKey: Any] {
+        [
+            .applicationVersion: versionLabel,
+            .version: ""
+        ]
+    }
+
+    private static func normalizedInfoString(_ value: Any?) -> String? {
+        guard let string = value as? String else { return nil }
+
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }
 
@@ -128,9 +164,9 @@ enum MenuBarMenuDescriptor {
                 shortcutDisplay: "⌘,"
             ),
             MenuBarMenuItemDescriptor(
-                title: language == .english ? "About \(appName)" : "关于 \(appName)",
+                title: language == .english ? "About" : "关于",
                 action: .openAbout,
-                children: aboutItems(language: language, appVersion: appVersion)
+                shortcutDisplay: appVersion
             ),
             .separator(),
             MenuBarMenuItemDescriptor(
@@ -143,25 +179,6 @@ enum MenuBarMenuDescriptor {
         ]
     }
 
-    private static func aboutItems(
-        language: AppLanguage,
-        appVersion: String
-    ) -> [MenuBarMenuItemDescriptor] {
-        [
-            MenuBarMenuItemDescriptor(
-                title: MenuBarAboutDescriptor.versionText(
-                    language: language,
-                    versionLabel: appVersion
-                ),
-                action: nil
-            ),
-            MenuBarMenuItemDescriptor(
-                title: MenuBarAboutDescriptor.githubTitle(language: language),
-                action: .openGitHub,
-                iconAssetName: MenuBarAboutDescriptor.githubIconAssetName
-            )
-        ]
-    }
 }
 
 private extension Array where Element == MenuBarMenuItemDescriptor {

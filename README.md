@@ -38,7 +38,7 @@ Clipboard managers are useful because they remember what you forget. They are ri
 
 | Area | What V-Paste gives you |
 | --- | --- |
-| Fast recall | A floating bottom panel with search, keyboard navigation, and one-click paste-back. |
+| Fast recall | A floating bottom panel with search, type filters, keyboard navigation, and one-click paste-back. |
 | Real item types | Text, URLs, copied files, and images are rendered as distinct cards instead of one generic list. |
 | Useful context | Source app names, timestamps, link previews, favicons, image sizes, and file metadata. |
 | Organization | Favorites and groups keep important snippets from disappearing into the stream. |
@@ -49,7 +49,8 @@ Clipboard managers are useful because they remember what you forget. They are ri
 ## Highlights
 
 - **Instant panel:** Press the global shortcut and V-Paste slides up as a focused clipboard command center.
-- **Search that respects flow:** Filter history by text, URLs, file names, group names, and source metadata.
+- **Search that respects flow:** Filter history by text, URLs, file names, group names, source metadata, or one content type at a time.
+- **Single-select type filter:** Narrow the panel to images, text, links, or files from a compact menu beside search.
 - **Rich previews:** URL cards can show page titles and favicons; image cards show thumbnails and pixel dimensions.
 - **Favorites and groups:** Pin items that matter and move reusable snippets into named groups.
 - **Local-first storage:** Clipboard history is stored under your macOS Application Support directory.
@@ -152,7 +153,7 @@ docs/                     Public documentation and README assets
 - Signed and notarized release artifacts.
 - More granular app and content ignore rules.
 - Import/export for reusable snippets.
-- Additional search filters and keyboard actions.
+- More keyboard actions and advanced filtering controls.
 - More polished onboarding for first-time users.
 
 ## Contributing

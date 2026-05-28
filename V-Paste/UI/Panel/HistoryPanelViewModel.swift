@@ -1,6 +1,14 @@
 import Combine
 import Foundation
 
+enum ClipboardContentFilter: CaseIterable, Equatable {
+    case all
+    case images
+    case text
+    case links
+    case files
+}
+
 @MainActor
 final class HistoryPanelViewModel: ObservableObject {
     @Published private(set) var allItems: [ClipboardItem]
@@ -8,6 +16,7 @@ final class HistoryPanelViewModel: ObservableObject {
     @Published private(set) var selectedIndex: Int
     @Published private(set) var searchText: String
     @Published private(set) var showsFavoritesOnly: Bool
+    @Published private(set) var activeContentFilter: ClipboardContentFilter
     @Published private(set) var groups: [ClipboardGroup]
     @Published private(set) var activeGroupID: ClipboardGroup.ID?
     @Published private(set) var isSearchExpanded: Bool
@@ -31,6 +40,7 @@ final class HistoryPanelViewModel: ObservableObject {
         selectedIndex = items.isEmpty ? -1 : 0
         searchText = ""
         showsFavoritesOnly = false
+        activeContentFilter = .all
         self.groups = groups
         self.activeGroupID = activeGroupID
         isSearchExpanded = false
@@ -127,6 +137,13 @@ final class HistoryPanelViewModel: ObservableObject {
         applyFilter(resetSelection: true)
     }
 
+    func setActiveContentFilter(_ filter: ClipboardContentFilter) {
+        guard activeContentFilter != filter else { return }
+
+        activeContentFilter = filter
+        applyFilter(resetSelection: true)
+    }
+
     private func applyFilter(resetSelection: Bool) {
         let previousItem = selectedItem
         var candidateItems = allItems
@@ -137,6 +154,10 @@ final class HistoryPanelViewModel: ObservableObject {
 
         if showsFavoritesOnly {
             candidateItems = candidateItems.filter(\.isFavorited)
+        }
+
+        candidateItems = candidateItems.filter { item in
+            activeContentFilter.includes(item)
         }
 
         if searchText.isEmpty {
@@ -173,6 +194,35 @@ final class HistoryPanelViewModel: ObservableObject {
         guard let index = filteredItems.firstIndex(where: { $0.id == id }) else { return }
 
         selectedIndex = index
+    }
+}
+
+private extension ClipboardContentFilter {
+    func includes(_ item: ClipboardItem) -> Bool {
+        switch self {
+        case .all:
+            return true
+        case .images:
+            return item.contentType == .image
+        case .text:
+            return item.contentType == .text && !isWebURL(item.urlString)
+        case .links:
+            return isWebURL(item.urlString)
+        case .files:
+            return item.contentType == .file
+        }
+    }
+
+    private func isWebURL(_ urlString: String?) -> Bool {
+        guard let urlString,
+              let url = URL(string: urlString),
+              let scheme = url.scheme?.lowercased(),
+              url.host?.isEmpty == false
+        else {
+            return false
+        }
+
+        return scheme == "http" || scheme == "https"
     }
 }
 

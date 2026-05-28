@@ -391,7 +391,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func openAbout() {
-        NSApp.orderFrontStandardAboutPanel(nil)
+        NSApp.orderFrontStandardAboutPanel(
+            options: MenuBarAboutDescriptor.standardPanelOptions()
+        )
         NSApp.activate(ignoringOtherApps: true)
     }
 
