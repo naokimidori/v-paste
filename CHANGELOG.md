@@ -4,6 +4,21 @@ All notable changes to V-Paste will be documented in this file.
 
 The project follows semantic versioning for public releases.
 
+## [1.2.0] - 2026-06-03
+
+### Changed
+
+- Split the history panel and card implementation into smaller responsibility-focused files.
+- Split large history panel tests into focused support, view model, menu/settings, and test helper files.
+- Improved history panel presentation on multi-display setups so the panel opens on the active display instead of drifting from another screen.
+- Reworked the panel presentation animation to keep the window fixed at the current screen bottom while sliding clipped content inside the panel.
+- Optimized the slide animation with a layer transform path for smoother presentation.
+
+### Fixed
+
+- Fixed cross-display panel transition artifacts when opening from a secondary display.
+- Fixed the visual mismatch where the fallback presentation looked like a fade instead of a bottom slide.
+
 ## [1.1.0] - 2026-05-29
 
 ### Added

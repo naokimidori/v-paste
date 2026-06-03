@@ -111,11 +111,72 @@ enum HistoryPanelLayout {
     }
 }
 
+struct HistoryPanelScreenSnapshot: Equatable {
+    let frame: NSRect
+    let visibleFrame: NSRect
+
+    init(frame: NSRect, visibleFrame: NSRect) {
+        self.frame = frame
+        self.visibleFrame = visibleFrame
+    }
+
+    init(screen: NSScreen) {
+        self.init(frame: screen.frame, visibleFrame: screen.visibleFrame)
+    }
+}
+
+struct HistoryPanelPresentationFrames: Equatable {
+    let hidden: NSRect
+    let visible: NSRect
+}
+
+enum HistoryPanelPresentationTarget {
+    static func frame(
+        activeScreen: HistoryPanelScreenSnapshot?,
+        panelScreen: HistoryPanelScreenSnapshot?,
+        hiddenOffset: CGFloat
+    ) -> NSRect? {
+        guard let screen = activeScreen ?? panelScreen else { return nil }
+
+        return HistoryPanelLayout.frame(
+            screenFrame: screen.frame,
+            visibleFrame: screen.visibleFrame,
+            hiddenOffset: hiddenOffset
+        )
+    }
+
+    static func frames(
+        activeScreen: HistoryPanelScreenSnapshot?,
+        panelScreen: HistoryPanelScreenSnapshot?,
+        hiddenOffset: CGFloat
+    ) -> HistoryPanelPresentationFrames? {
+        guard let screen = activeScreen ?? panelScreen else { return nil }
+
+        return HistoryPanelPresentationFrames(
+            hidden: HistoryPanelLayout.frame(
+                screenFrame: screen.frame,
+                visibleFrame: screen.visibleFrame,
+                hiddenOffset: hiddenOffset
+            ),
+            visible: HistoryPanelLayout.frame(
+                screenFrame: screen.frame,
+                visibleFrame: screen.visibleFrame,
+                hiddenOffset: 0
+            )
+        )
+    }
+}
+
 enum HistoryPanelPresentationAnimation {
     static let hiddenBottomInset: CGFloat = 8
     static var hiddenOffset: CGFloat {
         HistoryPanelLayout.panelHeight + hiddenBottomInset
     }
+    static var contentHiddenOffset: CGFloat {
+        HistoryPanelLayout.panelHeight
+    }
+    static let animatesWindowFrame = false
+    static let usesLayerTransform = true
     static let showDuration: TimeInterval = 0.24
     static let hideDuration: TimeInterval = 0.18
 
@@ -127,6 +188,7 @@ enum HistoryPanelPresentationAnimation {
 final class HistoryPanelController: NSObject, NSWindowDelegate {
     private let appState: AppState
     private var panel: FloatingHistoryPanel?
+    private var contentController: SlidingHistoryPanelContentController?
     private var hostingController: NSHostingController<HistoryPanelView>?
     private var globalOutsideClickMonitor: Any?
     private var localEventMonitor: Any?
@@ -142,6 +204,7 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
     private var onOpenAbout: (() -> Void)?
     private var onQuit: (() -> Void)?
     private var presentationGeneration = 0
+    private var presentationScreen: HistoryPanelScreenSnapshot?
 
     init(appState: AppState) {
         self.appState = appState
@@ -209,18 +272,28 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
         appState.refreshPanelItems(resetSelection: true)
 
         let panel = makePanelIfNeeded()
-        position(panel: panel, hiddenOffset: HistoryPanelPresentationAnimation.hiddenOffset)
-        panel.alphaValue = 1
+        presentationScreen = activeScreen().map(HistoryPanelScreenSnapshot.init(screen:))
+        guard let frames = presentationFrames(
+            for: panel,
+            hiddenOffset: HistoryPanelPresentationAnimation.hiddenOffset
+        ) else { return }
+
+        prepareForPresentation(panel: panel, visibleFrame: frames.visible)
+        contentController?.setContentOffset(
+            HistoryPanelPresentationAnimation.contentHiddenOffset,
+            animated: false
+        )
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         appState.isPanelVisible = true
         installEventMonitors()
 
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = HistoryPanelPresentationAnimation.showDuration
-            context.timingFunction = HistoryPanelPresentationAnimation.showTimingFunction
-            animatePosition(panel: panel, hiddenOffset: 0)
-        }
+        contentController?.setContentOffset(
+            0,
+            animated: true,
+            duration: HistoryPanelPresentationAnimation.showDuration,
+            timingFunction: HistoryPanelPresentationAnimation.showTimingFunction
+        )
     }
 
     func hide() {
@@ -234,18 +307,17 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
         removeEventMonitors()
         appState.isPanelVisible = false
 
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = HistoryPanelPresentationAnimation.hideDuration
-            context.timingFunction = HistoryPanelPresentationAnimation.hideTimingFunction
-            animatePosition(
-                panel: panel,
-                hiddenOffset: HistoryPanelPresentationAnimation.hiddenOffset
-            )
-        } completionHandler: {
+        contentController?.setContentOffset(
+            HistoryPanelPresentationAnimation.contentHiddenOffset,
+            animated: true,
+            duration: HistoryPanelPresentationAnimation.hideDuration,
+            timingFunction: HistoryPanelPresentationAnimation.hideTimingFunction
+        ) {
             Task { @MainActor in
                 guard self.presentationGeneration == hideGeneration else { return }
 
                 panel.orderOut(nil)
+                self.presentationScreen = nil
             }
         }
     }
@@ -312,6 +384,9 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
             }
         )
         let hostingController = NSHostingController(rootView: view)
+        let contentController = SlidingHistoryPanelContentController(
+            hostedView: hostingController.view
+        )
         let panel = FloatingHistoryPanel(
             contentRect: .zero,
             styleMask: [.borderless],
@@ -319,9 +394,10 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
             defer: false
         )
 
-        panel.contentViewController = hostingController
+        panel.contentViewController = contentController
         panel.delegate = self
         panel.level = HistoryPanelLayout.windowLevel
+        panel.animationBehavior = .none
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
@@ -329,29 +405,34 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
         panel.isReleasedWhenClosed = false
         panel.collectionBehavior = [.transient, .fullScreenAuxiliary, .moveToActiveSpace]
 
+        self.contentController = contentController
         self.hostingController = hostingController
         self.panel = panel
         return panel
     }
 
-    private func position(panel: NSWindow, hiddenOffset: CGFloat) {
-        guard let frame = frame(for: panel, hiddenOffset: hiddenOffset) else { return }
+    private func prepareForPresentation(panel: NSWindow, visibleFrame: NSRect) {
+        if panel.isVisible {
+            panel.orderOut(nil)
+        }
 
-        panel.setFrame(frame, display: true)
+        contentController?.removeAnimations()
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0
+            context.allowsImplicitAnimation = false
+            panel.setFrame(visibleFrame, display: false)
+            panel.alphaValue = 1
+        }
+        panel.displayIfNeeded()
     }
 
-    private func animatePosition(panel: NSWindow, hiddenOffset: CGFloat) {
-        guard let frame = frame(for: panel, hiddenOffset: hiddenOffset) else { return }
-
-        panel.animator().setFrame(frame, display: true)
-    }
-
-    private func frame(for panel: NSWindow, hiddenOffset: CGFloat) -> NSRect? {
-        guard let screen = panel.screen ?? activeScreen() else { return nil }
-
-        return HistoryPanelLayout.frame(
-            screenFrame: screen.frame,
-            visibleFrame: screen.visibleFrame,
+    private func presentationFrames(
+        for panel: NSWindow,
+        hiddenOffset: CGFloat
+    ) -> HistoryPanelPresentationFrames? {
+        HistoryPanelPresentationTarget.frames(
+            activeScreen: presentationScreen ?? activeScreen().map(HistoryPanelScreenSnapshot.init(screen:)),
+            panelScreen: panel.screen.map(HistoryPanelScreenSnapshot.init(screen:)),
             hiddenOffset: hiddenOffset
         )
     }
@@ -478,6 +559,176 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
 
         onCopy?(selectedItem)
         hide()
+    }
+}
+
+private final class SlidingHistoryPanelContentController: NSViewController {
+    private let slidingView: SlidingHistoryPanelContentView
+
+    init(hostedView: NSView) {
+        slidingView = SlidingHistoryPanelContentView(contentView: hostedView)
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func loadView() {
+        view = slidingView
+    }
+
+    func setContentOffset(
+        _ offset: CGFloat,
+        animated: Bool,
+        duration: TimeInterval = 0,
+        timingFunction: CAMediaTimingFunction? = nil,
+        completion: (() -> Void)? = nil
+    ) {
+        slidingView.setContentOffset(
+            offset,
+            animated: animated,
+            duration: duration,
+            timingFunction: timingFunction,
+            completion: completion
+        )
+    }
+
+    func removeAnimations() {
+        slidingView.removeAnimations()
+    }
+}
+
+private final class SlidingHistoryPanelContentView: NSView {
+    private let contentView: NSView
+    private var contentOffset: CGFloat = 0
+    private var animationCompletionDelegate: LayerAnimationCompletionDelegate?
+
+    init(contentView: NSView) {
+        self.contentView = contentView
+        super.init(frame: .zero)
+
+        wantsLayer = true
+        layer?.masksToBounds = true
+        contentView.wantsLayer = true
+        contentView.autoresizingMask = []
+        addSubview(contentView)
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layout() {
+        super.layout()
+        applyContentFrame(animated: false)
+    }
+
+    func setContentOffset(
+        _ offset: CGFloat,
+        animated: Bool,
+        duration: TimeInterval = 0,
+        timingFunction: CAMediaTimingFunction? = nil,
+        completion: (() -> Void)? = nil
+    ) {
+        contentOffset = offset
+
+        guard animated else {
+            applyContentFrame(animated: false)
+            completion?()
+            return
+        }
+
+        applyContentFrame(
+            animated: true,
+            duration: duration,
+            timingFunction: timingFunction,
+            completion: completion
+        )
+    }
+
+    func removeAnimations() {
+        layer?.removeAllAnimations()
+        contentView.layer?.removeAllAnimations()
+    }
+
+    private func applyContentFrame(
+        animated: Bool,
+        duration: TimeInterval = 0,
+        timingFunction: CAMediaTimingFunction? = nil,
+        completion: (() -> Void)? = nil
+    ) {
+        contentView.frame = bounds
+
+        if animated {
+            applyLayerTransformAnimated(
+                duration: duration,
+                timingFunction: timingFunction,
+                completion: completion
+            )
+        } else {
+            applyLayerTransform(animated: false)
+        }
+    }
+
+    private func applyLayerTransformAnimated(
+        duration: TimeInterval,
+        timingFunction: CAMediaTimingFunction?,
+        completion: (() -> Void)?
+    ) {
+        guard let contentLayer = contentView.layer else {
+            applyLayerTransform(animated: false)
+            completion?()
+            return
+        }
+
+        let animationKey = "HistoryPanelContentSlideTransform"
+        let currentTransform = contentLayer.presentation()?.transform ?? contentLayer.transform
+        let targetTransform = CATransform3DMakeTranslation(0, -contentOffset, 0)
+
+        contentLayer.removeAnimation(forKey: animationKey)
+
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        contentLayer.transform = targetTransform
+        CATransaction.commit()
+
+        let animation = CABasicAnimation(keyPath: "transform")
+        animation.fromValue = currentTransform
+        animation.toValue = targetTransform
+        animation.duration = duration
+        animation.timingFunction = timingFunction
+        animation.isRemovedOnCompletion = true
+        animationCompletionDelegate = LayerAnimationCompletionDelegate { [weak self] in
+            self?.animationCompletionDelegate = nil
+            completion?()
+        }
+        animation.delegate = animationCompletionDelegate
+
+        contentLayer.add(animation, forKey: animationKey)
+    }
+
+    private func applyLayerTransform(animated: Bool) {
+        guard let contentLayer = contentView.layer else { return }
+
+        CATransaction.begin()
+        CATransaction.setDisableActions(!animated)
+        contentLayer.transform = CATransform3DMakeTranslation(0, -contentOffset, 0)
+        CATransaction.commit()
+    }
+}
+
+private final class LayerAnimationCompletionDelegate: NSObject, CAAnimationDelegate {
+    private let completion: () -> Void
+
+    init(completion: @escaping () -> Void) {
+        self.completion = completion
+    }
+
+    func animationDidStop(_: CAAnimation, finished _: Bool) {
+        completion()
     }
 }
 

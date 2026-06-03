@@ -4,20 +4,20 @@ import XCTest
 
 final class ClipboardNormalizerTests: XCTestCase {
     func testLinkMetadataParserExtractsOpenGraphTitleAndShortcutIcon() throws {
-        let pageURL = try XCTUnwrap(URL(string: "https://example.com/pricing/pro-plan"))
+        let pageURL = try XCTUnwrap(URL(string: "https://platform.minimaxi.com/user-center/payment/token-plan"))
         let html = """
         <html>
           <head>
-            <meta property="og:title" content="Example Pricing Portal">
-            <link rel="shortcut icon" href="https://example.com/logo.ico" type="image/x-icon">
+            <meta property="og:title" content="MiniMax-与用户共创智能">
+            <link rel="shortcut icon" href="https://filecdn.minimax.chat/public/logo.ico" type="image/x-icon">
           </head>
         </html>
         """
 
         let metadata = LinkMetadataParser.parse(html: html, pageURL: pageURL)
 
-        XCTAssertEqual(metadata.title, "Example Pricing Portal")
-        XCTAssertEqual(metadata.iconURL?.absoluteString, "https://example.com/logo.ico")
+        XCTAssertEqual(metadata.title, "MiniMax-与用户共创智能")
+        XCTAssertEqual(metadata.iconURL?.absoluteString, "https://filecdn.minimax.chat/public/logo.ico")
     }
 
     func testLinkMetadataParserResolvesRelativeIconAndFallsBackToTitleTag() throws {
