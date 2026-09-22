@@ -68,12 +68,12 @@ V-Paste 的产品灵感借鉴自 [Paste](https://pasteapp.io/)，尤其是它的
 
 可以从 [GitHub Releases](https://github.com/naokimidori/v-paste/releases/latest) 下载最新公开构建。
 
-V-Paste 2.0.0 以源码 Release 形式发布，因为项目当前未配置正式的 Developer ID 签名和 notarization。请按照下方步骤从源码构建；此前 Release 中的预览版 DMG 或 ZIP 不应视为已签名的正式二进制。
+V-Paste 2.0.0 同时提供源码压缩包以及 DMG、ZIP 预览构建。二进制附件使用本地 ad-hoc 签名，未经过 Developer ID 签名和 notarization，因此可能被 macOS Gatekeeper 拦截。必要时请按照下方步骤从源码构建；不要把这些预览附件视为已签名的正式二进制。
 
-源码使用流程：
+预览二进制使用流程：
 
-1. 从最新 Release 下载源码压缩包，或克隆仓库。
-2. 使用 Xcode 或 `./script/build_and_run.sh` 构建并启动 V-Paste。
+1. 从最新 Release 下载 DMG 或 ZIP。
+2. 启动 `V-Paste.app`；如果被 Gatekeeper 拦截，请改为从源码构建。
 3. 点击菜单栏图标，或按 `Option + ~` 打开剪贴板面板。
 4. 在设置里调整保留策略、开机启动、监听开关和显示面板快捷键。
 

@@ -68,12 +68,12 @@ Clipboard managers are useful because they remember what you forget. They are ri
 
 Download the latest public build from [GitHub Releases](https://github.com/naokimidori/v-paste/releases/latest).
 
-V-Paste 2.0.0 is published as a source release because official Developer ID signing and notarization are not configured for this project. Build it from source using the steps below. Do not treat older preview DMG or ZIP assets as signed production binaries.
+V-Paste 2.0.0 includes source archives plus DMG and ZIP preview builds. The binary assets use local ad-hoc signing and are not Developer ID signed or notarized, so macOS Gatekeeper may block them. Build from source using the steps below if needed; do not treat the preview assets as signed production binaries.
 
-Source workflow:
+Preview binary workflow:
 
-1. Download the source archive from the latest release, or clone the repository.
-2. Build and launch V-Paste with Xcode or `./script/build_and_run.sh`.
+1. Download the DMG or ZIP from the latest release.
+2. Launch `V-Paste.app`. If Gatekeeper blocks it, build from source instead.
 3. Use the menu bar icon or press `Option + ~` to open the clipboard panel.
 4. Open Settings to adjust retention, launch-at-login, monitoring, and the show-panel shortcut.
 
