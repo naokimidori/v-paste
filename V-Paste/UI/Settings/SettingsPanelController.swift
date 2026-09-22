@@ -10,7 +10,7 @@ enum SettingsPanelDescriptor {
         title(language: .english)
     }
 
-    static let contentSize = CGSize(width: 580, height: 380)
+    static let contentSize = CGSize(width: 600, height: 430)
 }
 
 enum SettingsPanelPlacement {
@@ -47,6 +47,19 @@ final class SettingsPanelController: NSObject, NSWindowDelegate {
     private let onSetApplicationIgnoreEnabled: (Bool) -> Void
     private let onSetIgnoredApplications: ([IgnoredApplicationRule]) -> Void
     private let onClearHistory: () -> Void
+    private let isExperimentalFeaturesEnabled: () -> Bool
+    private let onSetExperimentalFeaturesEnabled: (Bool) -> Void
+    private let hasSavedJevApiKey: () -> Bool
+    private let currentJevStatus: () -> JevConfigurationStatus
+    private let isJevRecommendationEnabled: () -> Bool
+    private let onSetJevRecommendationEnabled: (Bool) -> Void
+    private let onSaveAndVerifyJevApiKey: (String) async -> JevValidationResult
+    private let onRemoveJevApiKey: () -> Void
+    private let isAccessibilityTrusted: () -> Bool
+    private let onRequestAccessibilityPermission: () -> Void
+    private let onOpenAccessibilitySettings: () -> Void
+    private let onFetchJevUsageSummary: () async -> JevMonthUsageSummary
+    private let onClearJevUsage: () async -> Void
     private var panel: NSPanel?
     private var hostingController: NSHostingController<SettingsView>?
 
@@ -65,7 +78,20 @@ final class SettingsPanelController: NSObject, NSWindowDelegate {
         isApplicationIgnoreEnabled: @escaping () -> Bool,
         onSetApplicationIgnoreEnabled: @escaping (Bool) -> Void,
         onSetIgnoredApplications: @escaping ([IgnoredApplicationRule]) -> Void,
-        onClearHistory: @escaping () -> Void
+        onClearHistory: @escaping () -> Void,
+        isExperimentalFeaturesEnabled: @escaping () -> Bool = { false },
+        onSetExperimentalFeaturesEnabled: @escaping (Bool) -> Void = { _ in },
+        hasSavedJevApiKey: @escaping () -> Bool = { false },
+        currentJevStatus: @escaping () -> JevConfigurationStatus = { .notConfigured },
+        isJevRecommendationEnabled: @escaping () -> Bool = { false },
+        onSetJevRecommendationEnabled: @escaping (Bool) -> Void = { _ in },
+        onSaveAndVerifyJevApiKey: @escaping (String) async -> JevValidationResult = { _ in .valid },
+        onRemoveJevApiKey: @escaping () -> Void = {},
+        isAccessibilityTrusted: @escaping () -> Bool = { false },
+        onRequestAccessibilityPermission: @escaping () -> Void = {},
+        onOpenAccessibilitySettings: @escaping () -> Void = {},
+        onFetchJevUsageSummary: @escaping () async -> JevMonthUsageSummary = { .zero },
+        onClearJevUsage: @escaping () async -> Void = {}
     ) {
         self.appState = appState
         self.isLaunchAtLoginEnabled = isLaunchAtLoginEnabled
@@ -82,11 +108,41 @@ final class SettingsPanelController: NSObject, NSWindowDelegate {
         self.onSetApplicationIgnoreEnabled = onSetApplicationIgnoreEnabled
         self.onSetIgnoredApplications = onSetIgnoredApplications
         self.onClearHistory = onClearHistory
+        self.isExperimentalFeaturesEnabled = isExperimentalFeaturesEnabled
+        self.onSetExperimentalFeaturesEnabled = onSetExperimentalFeaturesEnabled
+        self.hasSavedJevApiKey = hasSavedJevApiKey
+        self.currentJevStatus = currentJevStatus
+        self.isJevRecommendationEnabled = isJevRecommendationEnabled
+        self.onSetJevRecommendationEnabled = onSetJevRecommendationEnabled
+        self.onSaveAndVerifyJevApiKey = onSaveAndVerifyJevApiKey
+        self.onRemoveJevApiKey = onRemoveJevApiKey
+        self.isAccessibilityTrusted = isAccessibilityTrusted
+        self.onRequestAccessibilityPermission = onRequestAccessibilityPermission
+        self.onOpenAccessibilitySettings = onOpenAccessibilitySettings
+        self.onFetchJevUsageSummary = onFetchJevUsageSummary
+        self.onClearJevUsage = onClearJevUsage
         super.init()
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleApplicationDidBecomeActive),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     func show() {
         let panel = makePanelIfNeeded()
+
+        appState.setExperimentalFeaturesEnabled(isExperimentalFeaturesEnabled())
+        appState.setHasSavedJevApiKey(hasSavedJevApiKey())
+        appState.setJevConfigurationStatus(currentJevStatus())
+        appState.setJevRecommendationEnabled(isJevRecommendationEnabled())
+        appState.setIsAccessibilityTrusted(isAccessibilityTrusted())
 
         hostingController?.rootView = makeSettingsView()
         panel.title = SettingsPanelDescriptor.title(language: currentLanguage())
@@ -164,7 +220,67 @@ final class SettingsPanelController: NSObject, NSWindowDelegate {
             isApplicationIgnoreEnabled: isApplicationIgnoreEnabled(),
             onSetApplicationIgnoreEnabled: onSetApplicationIgnoreEnabled,
             onSetIgnoredApplications: onSetIgnoredApplications,
-            onClearHistory: onClearHistory
+            onClearHistory: onClearHistory,
+            isExperimentalFeaturesEnabled: isExperimentalFeaturesEnabled(),
+            onSetExperimentalFeaturesEnabled: { [weak self] isEnabled in
+                guard let self else { return }
+                self.onSetExperimentalFeaturesEnabled(isEnabled)
+                Task { @MainActor in
+                    self.appState.setExperimentalFeaturesEnabled(self.isExperimentalFeaturesEnabled())
+                    self.appState.setJevRecommendationEnabled(self.isJevRecommendationEnabled())
+                    self.refreshSettingsView()
+                }
+            },
+            hasSavedJevApiKey: hasSavedJevApiKey(),
+            jevStatus: currentJevStatus(),
+            isJevRecommendationEnabled: isJevRecommendationEnabled(),
+            onSetJevRecommendationEnabled: onSetJevRecommendationEnabled,
+            onSaveAndVerifyJevApiKey: { [weak self] key in
+                guard let self else { return .valid }
+                let result = await self.onSaveAndVerifyJevApiKey(key)
+                Task { @MainActor in
+                    self.appState.setHasSavedJevApiKey(self.hasSavedJevApiKey())
+                    self.appState.setJevConfigurationStatus(self.currentJevStatus())
+                    self.appState.setJevRecommendationEnabled(self.isJevRecommendationEnabled())
+                    self.refreshSettingsView()
+                }
+                return result
+            },
+            onRemoveJevApiKey: { [weak self] in
+                guard let self else { return }
+                self.onRemoveJevApiKey()
+                Task { @MainActor in
+                    self.appState.setHasSavedJevApiKey(self.hasSavedJevApiKey())
+                    self.appState.setJevConfigurationStatus(self.currentJevStatus())
+                    self.appState.setJevRecommendationEnabled(self.isJevRecommendationEnabled())
+                    self.refreshSettingsView()
+                }
+            },
+            isAccessibilityTrusted: isAccessibilityTrusted(),
+            onRequestAccessibilityPermission: { [weak self] in
+                guard let self else { return }
+                self.onRequestAccessibilityPermission()
+                Task { @MainActor in
+                    self.appState.setIsAccessibilityTrusted(self.isAccessibilityTrusted())
+                    self.refreshSettingsView()
+                }
+            },
+            onOpenAccessibilitySettings: onOpenAccessibilitySettings,
+            onFetchJevUsageSummary: onFetchJevUsageSummary,
+            onClearJevUsage: onClearJevUsage
         )
+    }
+
+    func refreshSettingsView() {
+        guard let panel, panel.isVisible else { return }
+        hostingController?.rootView = makeSettingsView()
+    }
+
+    @objc private func handleApplicationDidBecomeActive() {
+        refreshSettingsView()
+    }
+
+    func windowDidBecomeKey(_ notification: Notification) {
+        refreshSettingsView()
     }
 }

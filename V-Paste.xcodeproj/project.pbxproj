@@ -48,6 +48,33 @@
 		D276569A135C4C06A99586B5 /* ClipboardStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76D259071F84573892B8094 /* ClipboardStoreTests.swift */; };
 		DE3C1B58B9344D7AA7755D23 /* ClipboardItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D09816F24A640B9A8596687 /* ClipboardItemTests.swift */; };
 		F82D70F2AEFC499996E4FE1D /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71BDB9D553CF4FE48C129E53 /* ClipboardStore.swift */; };
+		A81000000000000000000004 /* JevSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A81000000000000000000014 /* JevSettingsView.swift */; };
+		A82000000000000000000001 /* AccessibilityPermissionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82000000000000000000011 /* AccessibilityPermissionService.swift */; };
+		A83000000000000000000001 /* JevCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83000000000000000000011 /* JevCredentialStore.swift */; };
+		A83000000000000000000002 /* JevValidationClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83000000000000000000012 /* JevValidationClient.swift */; };
+		B6681894BFA4BFE324D77158 /* JevSettingsStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7EE701F4476F5496ECD4DB0 /* JevSettingsStateTests.swift */; };
+		A83000000000000000000003 /* JevCredentialStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83000000000000000000013 /* JevCredentialStoreTests.swift */; };
+		A83000000000000000000004 /* JevValidationClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83000000000000000000014 /* JevValidationClientTests.swift */; };
+		A84000000000000000000001 /* DestinationContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A84000000000000000000011 /* DestinationContext.swift */; };
+		A82000000000000000000002 /* DestinationApplicationTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82000000000000000000012 /* DestinationApplicationTracker.swift */; };
+		A82000000000000000000003 /* DestinationApplicationTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82000000000000000000013 /* DestinationApplicationTrackerTests.swift */; };
+		A82000000000000000000004 /* DestinationContextCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82000000000000000000014 /* DestinationContextCapture.swift */; };
+		A82000000000000000000005 /* DestinationContextCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82000000000000000000015 /* DestinationContextCaptureTests.swift */; };
+		A83000000000000000000005 /* SensitiveTextRedactor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83000000000000000000015 /* SensitiveTextRedactor.swift */; };
+		A83000000000000000000006 /* SensitiveTextRedactorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83000000000000000000016 /* SensitiveTextRedactorTests.swift */; };
+		A83000000000000000000007 /* JevCandidateBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83000000000000000000017 /* JevCandidateBuilder.swift */; };
+		A83000000000000000000008 /* JevCandidateBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83000000000000000000018 /* JevCandidateBuilderTests.swift */; };
+		A83000000000000000000009 /* JevModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83000000000000000000019 /* JevModels.swift */; };
+		A8300000000000000000000A /* JevDecisionClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8300000000000000000001A /* JevDecisionClient.swift */; };
+		A8300000000000000000000B /* JevHTTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8300000000000000000001B /* JevHTTPClient.swift */; };
+		A8300000000000000000000C /* JevHTTPClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8300000000000000000001C /* JevHTTPClientTests.swift */; };
+		A8300000000000000000000D /* JevPipelineDryRunTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8300000000000000000001D /* JevPipelineDryRunTests.swift */; };
+		A85000000000000000000001 /* JevRecommendationPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85000000000000000000011 /* JevRecommendationPolicy.swift */; };
+		A85000000000000000000002 /* JevRecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85000000000000000000012 /* JevRecommendationService.swift */; };
+		A85000000000000000000003 /* JevRecommendationPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85000000000000000000013 /* JevRecommendationPolicyTests.swift */; };
+		A85000000000000000000004 /* JevRecommendationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85000000000000000000014 /* JevRecommendationServiceTests.swift */; };
+		A85000000000000000000005 /* HistoryPanelViewModelRecommendationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85000000000000000000015 /* HistoryPanelViewModelRecommendationTests.swift */; };
+		A85000000000000000000006 /* JevUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85000000000000000000016 /* JevUsageStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,6 +131,33 @@
 		DFBE9FB34DCC224B298BFB9D /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
 		E48C336F604851EE81816BDD /* V-Paste.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "V-Paste.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F76D259071F84573892B8094 /* ClipboardStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStoreTests.swift; sourceTree = "<group>"; };
+		A81000000000000000000014 /* JevSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevSettingsView.swift; sourceTree = "<group>"; };
+		A82000000000000000000011 /* AccessibilityPermissionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityPermissionService.swift; sourceTree = "<group>"; };
+		A83000000000000000000011 /* JevCredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevCredentialStore.swift; sourceTree = "<group>"; };
+		A83000000000000000000012 /* JevValidationClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevValidationClient.swift; sourceTree = "<group>"; };
+		C7EE701F4476F5496ECD4DB0 /* JevSettingsStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevSettingsStateTests.swift; sourceTree = "<group>"; };
+		A83000000000000000000013 /* JevCredentialStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevCredentialStoreTests.swift; sourceTree = "<group>"; };
+		A83000000000000000000014 /* JevValidationClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevValidationClientTests.swift; sourceTree = "<group>"; };
+		A84000000000000000000011 /* DestinationContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestinationContext.swift; sourceTree = "<group>"; };
+		A82000000000000000000012 /* DestinationApplicationTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestinationApplicationTracker.swift; sourceTree = "<group>"; };
+		A82000000000000000000013 /* DestinationApplicationTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestinationApplicationTrackerTests.swift; sourceTree = "<group>"; };
+		A82000000000000000000014 /* DestinationContextCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestinationContextCapture.swift; sourceTree = "<group>"; };
+		A82000000000000000000015 /* DestinationContextCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestinationContextCaptureTests.swift; sourceTree = "<group>"; };
+		A83000000000000000000015 /* SensitiveTextRedactor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensitiveTextRedactor.swift; sourceTree = "<group>"; };
+		A83000000000000000000016 /* SensitiveTextRedactorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensitiveTextRedactorTests.swift; sourceTree = "<group>"; };
+		A83000000000000000000017 /* JevCandidateBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevCandidateBuilder.swift; sourceTree = "<group>"; };
+		A83000000000000000000018 /* JevCandidateBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevCandidateBuilderTests.swift; sourceTree = "<group>"; };
+		A83000000000000000000019 /* JevModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevModels.swift; sourceTree = "<group>"; };
+		A8300000000000000000001A /* JevDecisionClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevDecisionClient.swift; sourceTree = "<group>"; };
+		A8300000000000000000001B /* JevHTTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevHTTPClient.swift; sourceTree = "<group>"; };
+		A8300000000000000000001C /* JevHTTPClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevHTTPClientTests.swift; sourceTree = "<group>"; };
+		A8300000000000000000001D /* JevPipelineDryRunTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevPipelineDryRunTests.swift; sourceTree = "<group>"; };
+		A85000000000000000000011 /* JevRecommendationPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevRecommendationPolicy.swift; sourceTree = "<group>"; };
+		A85000000000000000000012 /* JevRecommendationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevRecommendationService.swift; sourceTree = "<group>"; };
+		A85000000000000000000013 /* JevRecommendationPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevRecommendationPolicyTests.swift; sourceTree = "<group>"; };
+		A85000000000000000000014 /* JevRecommendationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevRecommendationServiceTests.swift; sourceTree = "<group>"; };
+		A85000000000000000000015 /* HistoryPanelViewModelRecommendationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPanelViewModelRecommendationTests.swift; sourceTree = "<group>"; };
+		A85000000000000000000016 /* JevUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevUsageStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -111,6 +165,7 @@
 			isa = PBXGroup;
 			children = (
 				C7EE701F4476F5496ECD4DAF /* AppStateTests.swift */,
+				C7EE701F4476F5496ECD4DB0 /* JevSettingsStateTests.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -121,6 +176,7 @@
 				08883D08193C4E70925B9F5C /* ClipboardContentType.swift */,
 				B40000000000000000000001 /* ClipboardGroup.swift */,
 				DFBE9FB34DCC224B298BFB9D /* ClipboardItem.swift */,
+				A84000000000000000000011 /* DestinationContext.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -149,19 +205,74 @@
 				C1A4B77A9D15E6AB4F7C1001 /* ClipboardNormalizerTests.swift */,
 				C1A4B77A9D15E6AB4F7C1002 /* ClipboardWritebackServiceTests.swift */,
 				C1A4B77A9D15E6AB4F7C1006 /* ClipboardMonitorTests.swift */,
+				A82000000000000000000023 /* Accessibility */,
+				A83000000000000000000022 /* Jev */,
 			);
 			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		A82000000000000000000023 /* Accessibility */ = {
+			isa = PBXGroup;
+			children = (
+				A82000000000000000000013 /* DestinationApplicationTrackerTests.swift */,
+				A82000000000000000000015 /* DestinationContextCaptureTests.swift */,
+			);
+			path = Accessibility;
+			sourceTree = "<group>";
+		};
+		A83000000000000000000022 /* Jev */ = {
+			isa = PBXGroup;
+			children = (
+				A83000000000000000000013 /* JevCredentialStoreTests.swift */,
+				A83000000000000000000014 /* JevValidationClientTests.swift */,
+				A83000000000000000000016 /* SensitiveTextRedactorTests.swift */,
+				A83000000000000000000018 /* JevCandidateBuilderTests.swift */,
+				A8300000000000000000001C /* JevHTTPClientTests.swift */,
+				A8300000000000000000001D /* JevPipelineDryRunTests.swift */,
+				A85000000000000000000013 /* JevRecommendationPolicyTests.swift */,
+				A85000000000000000000014 /* JevRecommendationServiceTests.swift */,
+			);
+			path = Jev;
 			sourceTree = "<group>";
 		};
 		4A64B2EC87014D4FB1C31D83 /* Infrastructure */ = {
 			isa = PBXGroup;
 			children = (
+				A82000000000000000000021 /* Accessibility */,
 				C1A4B77A9D15E6AB4F7C3001 /* Clipboard */,
 				C183C681DB954454AA330331 /* Database */,
 				C1A4B77A9D15E6AB4F7C3002 /* Files */,
 				A80000000000000000000022 /* Hotkey */,
+				A83000000000000000000021 /* Jev */,
 			);
 			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		A82000000000000000000021 /* Accessibility */ = {
+			isa = PBXGroup;
+			children = (
+				A82000000000000000000011 /* AccessibilityPermissionService.swift */,
+				A82000000000000000000012 /* DestinationApplicationTracker.swift */,
+				A82000000000000000000014 /* DestinationContextCapture.swift */,
+			);
+			path = Accessibility;
+			sourceTree = "<group>";
+		};
+		A83000000000000000000021 /* Jev */ = {
+			isa = PBXGroup;
+			children = (
+				A83000000000000000000011 /* JevCredentialStore.swift */,
+				A83000000000000000000012 /* JevValidationClient.swift */,
+				A83000000000000000000015 /* SensitiveTextRedactor.swift */,
+				A83000000000000000000017 /* JevCandidateBuilder.swift */,
+				A83000000000000000000019 /* JevModels.swift */,
+				A8300000000000000000001A /* JevDecisionClient.swift */,
+				A8300000000000000000001B /* JevHTTPClient.swift */,
+				A85000000000000000000011 /* JevRecommendationPolicy.swift */,
+				A85000000000000000000012 /* JevRecommendationService.swift */,
+				A85000000000000000000016 /* JevUsageStore.swift */,
+			);
+			path = Jev;
 			sourceTree = "<group>";
 		};
 		6F6A51554C87A357868BD959 /* App */ = {
@@ -248,6 +359,7 @@
 				A70200000000000000000011 /* HistoryPanelSupportTests.swift */,
 				A70200000000000000000013 /* HistoryPanelTestSupport.swift */,
 				9F6A7B8C1D2E3F4000000001 /* HistoryPanelViewModelTests.swift */,
+				A85000000000000000000015 /* HistoryPanelViewModelRecommendationTests.swift */,
 				A70200000000000000000012 /* MenuBarSettingsDescriptorTests.swift */,
 			);
 			path = Panel;
@@ -269,6 +381,7 @@
 				A81000000000000000000011 /* SettingsTabDescriptor.swift */,
 				A81000000000000000000013 /* SettingsPanelController.swift */,
 				A81000000000000000000012 /* SettingsView.swift */,
+				A81000000000000000000014 /* JevSettingsView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -412,6 +525,18 @@
 				A70200000000000000000003 /* HistoryPanelTestSupport.swift in Sources */,
 				9F6A7B8C1D2E3F4000000002 /* HistoryPanelViewModelTests.swift in Sources */,
 				A70200000000000000000002 /* MenuBarSettingsDescriptorTests.swift in Sources */,
+				B6681894BFA4BFE324D77158 /* JevSettingsStateTests.swift in Sources */,
+				A83000000000000000000003 /* JevCredentialStoreTests.swift in Sources */,
+				A83000000000000000000004 /* JevValidationClientTests.swift in Sources */,
+				A82000000000000000000003 /* DestinationApplicationTrackerTests.swift in Sources */,
+				A82000000000000000000005 /* DestinationContextCaptureTests.swift in Sources */,
+				A83000000000000000000006 /* SensitiveTextRedactorTests.swift in Sources */,
+				A83000000000000000000008 /* JevCandidateBuilderTests.swift in Sources */,
+				A8300000000000000000000C /* JevHTTPClientTests.swift in Sources */,
+				A8300000000000000000000D /* JevPipelineDryRunTests.swift in Sources */,
+				A85000000000000000000003 /* JevRecommendationPolicyTests.swift in Sources */,
+				A85000000000000000000004 /* JevRecommendationServiceTests.swift in Sources */,
+				A85000000000000000000005 /* HistoryPanelViewModelRecommendationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -419,6 +544,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A84000000000000000000001 /* DestinationContext.swift in Sources */,
+				A82000000000000000000002 /* DestinationApplicationTracker.swift in Sources */,
+				A82000000000000000000004 /* DestinationContextCapture.swift in Sources */,
+				A83000000000000000000005 /* SensitiveTextRedactor.swift in Sources */,
+				A83000000000000000000007 /* JevCandidateBuilder.swift in Sources */,
+				A83000000000000000000009 /* JevModels.swift in Sources */,
+				A8300000000000000000000A /* JevDecisionClient.swift in Sources */,
+				A8300000000000000000000B /* JevHTTPClient.swift in Sources */,
+				A85000000000000000000001 /* JevRecommendationPolicy.swift in Sources */,
+				A85000000000000000000002 /* JevRecommendationService.swift in Sources */,
+				A85000000000000000000006 /* JevUsageStore.swift in Sources */,
 				29DB8AFA40194E3266EACE34 /* AppDelegate.swift in Sources */,
 				57CC7ED16C1997BA0AB86599 /* AppState.swift in Sources */,
 				6666C37A22444A47BFE705AD /* AppPaths.swift in Sources */,
@@ -439,6 +575,10 @@
 				A81000000000000000000001 /* SettingsTabDescriptor.swift in Sources */,
 				A81000000000000000000003 /* SettingsPanelController.swift in Sources */,
 				A81000000000000000000002 /* SettingsView.swift in Sources */,
+				A81000000000000000000004 /* JevSettingsView.swift in Sources */,
+				A82000000000000000000001 /* AccessibilityPermissionService.swift in Sources */,
+				A83000000000000000000001 /* JevCredentialStore.swift in Sources */,
+				A83000000000000000000002 /* JevValidationClient.swift in Sources */,
 				A70000000000000000000003 /* HistoryCardView.swift in Sources */,
 				A70100000000000000000006 /* HistoryCardMedia.swift in Sources */,
 				A70100000000000000000005 /* HistoryCardSupport.swift in Sources */,
@@ -551,14 +691,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_MODULE_NAME = V_Paste;
 				PRODUCT_NAME = "V-Paste";
 				SDKROOT = macosx;
@@ -570,14 +710,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_MODULE_NAME = V_Paste;
 				PRODUCT_NAME = "V-Paste";
 				SDKROOT = macosx;

@@ -37,6 +37,35 @@ struct VPasteApp: App {
                 },
                 onClearHistory: {
                     appDelegate.clearHistoryFromSettings()
+                },
+                isExperimentalFeaturesEnabled: appDelegate.preferences.isExperimentalFeaturesEnabled,
+                onSetExperimentalFeaturesEnabled: { isEnabled in
+                    appDelegate.setExperimentalFeaturesEnabled(isEnabled)
+                },
+                hasSavedJevApiKey: appDelegate.hasSavedJevApiKey(),
+                jevStatus: appDelegate.currentJevConfigurationStatus(),
+                isJevRecommendationEnabled: appDelegate.isJevRecommendationEnabled(),
+                onSetJevRecommendationEnabled: { isEnabled in
+                    appDelegate.setJevRecommendationEnabled(isEnabled)
+                },
+                onSaveAndVerifyJevApiKey: { key in
+                    await appDelegate.saveAndVerifyJevApiKey(key)
+                },
+                onRemoveJevApiKey: {
+                    appDelegate.removeJevApiKey()
+                },
+                isAccessibilityTrusted: appDelegate.isAccessibilityTrusted(),
+                onRequestAccessibilityPermission: {
+                    appDelegate.requestAccessibilityPermission()
+                },
+                onOpenAccessibilitySettings: {
+                    appDelegate.openAccessibilitySettings()
+                },
+                onFetchJevUsageSummary: {
+                    (try? await appDelegate.jevUsageStore.currentMonthSummary(referenceDate: Date())) ?? .zero
+                },
+                onClearJevUsage: {
+                    try? await appDelegate.jevUsageStore.clearAll()
                 }
             )
         }

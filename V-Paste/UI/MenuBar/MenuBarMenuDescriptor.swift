@@ -102,12 +102,13 @@ enum MenuBarAboutDescriptor {
 
         guard isDevelopmentBuild,
               baseVersion != "Debug",
+              !baseVersion.localizedCaseInsensitiveContains("debug"),
               !baseVersion.hasSuffix("-dev")
         else {
             return baseVersion
         }
 
-        return "\(baseVersion)-dev"
+        return "\(baseVersion)-debug"
     }
 
     static func standardPanelOptions(

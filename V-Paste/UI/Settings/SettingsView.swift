@@ -98,6 +98,7 @@ enum SettingsClearHistoryConfirmationDescriptor {
 }
 
 struct SettingsView: View {
+    @ObservedObject var appState: AppState
     let onSetLaunchAtLogin: (Bool) throws -> Bool
     let onSetMonitoringEnabled: (Bool) -> Void
     let onSetLanguage: (AppLanguage) -> Void
@@ -106,6 +107,17 @@ struct SettingsView: View {
     let onSetApplicationIgnoreEnabled: (Bool) -> Void
     let onSetIgnoredApplications: ([IgnoredApplicationRule]) -> Void
     let onClearHistory: () -> Void
+    let hasSavedJevApiKey: Bool
+    let jevStatus: JevConfigurationStatus
+    let onSetExperimentalFeaturesEnabled: (Bool) -> Void
+    let onSetJevRecommendationEnabled: (Bool) -> Void
+    let onSaveAndVerifyJevApiKey: (String) async -> JevValidationResult
+    let onRemoveJevApiKey: () -> Void
+    let isAccessibilityTrusted: Bool
+    let onRequestAccessibilityPermission: () -> Void
+    let onOpenAccessibilitySettings: () -> Void
+    let onFetchJevUsageSummary: (() async -> JevMonthUsageSummary)?
+    let onClearJevUsage: (() async -> Void)?
 
     @State private var isLaunchAtLoginEnabled: Bool
     @State private var isMonitoringEnabled: Bool
@@ -114,6 +126,7 @@ struct SettingsView: View {
     @State private var retentionPolicy: ClipboardRetentionPolicy
     @State private var isApplicationIgnoreEnabled: Bool
     @State private var ignoredApplications: [IgnoredApplicationRule]
+    @State private var isJevRecommendationEnabled: Bool
     @State private var selectedTab = SettingsTabDescriptor.ID.general
     @State private var selectedIgnoredApplicationID: IgnoredApplicationRule.ID?
     @State private var isRecordingShortcut = false
@@ -136,8 +149,37 @@ struct SettingsView: View {
         isApplicationIgnoreEnabled: Bool,
         onSetApplicationIgnoreEnabled: @escaping (Bool) -> Void,
         onSetIgnoredApplications: @escaping ([IgnoredApplicationRule]) -> Void,
-        onClearHistory: @escaping () -> Void
+        onClearHistory: @escaping () -> Void,
+        isExperimentalFeaturesEnabled: Bool = false,
+        onSetExperimentalFeaturesEnabled: @escaping (Bool) -> Void = { _ in },
+        hasSavedJevApiKey: Bool = false,
+        jevStatus: JevConfigurationStatus = .notConfigured,
+        isJevRecommendationEnabled: Bool = false,
+        onSetJevRecommendationEnabled: @escaping (Bool) -> Void = { _ in },
+        onSaveAndVerifyJevApiKey: @escaping (String) async -> JevValidationResult = { _ in .valid },
+        onRemoveJevApiKey: @escaping () -> Void = {},
+        isAccessibilityTrusted: Bool = false,
+        onRequestAccessibilityPermission: @escaping () -> Void = {},
+        onOpenAccessibilitySettings: @escaping () -> Void = {},
+        onFetchJevUsageSummary: (() async -> JevMonthUsageSummary)? = nil,
+        onClearJevUsage: (() async -> Void)? = nil
     ) {
+        self.appState = appState
+        if isExperimentalFeaturesEnabled {
+            appState.setExperimentalFeaturesEnabled(true)
+        }
+        if hasSavedJevApiKey {
+            appState.setHasSavedJevApiKey(true)
+        }
+        if jevStatus != .notConfigured {
+            appState.setJevConfigurationStatus(jevStatus)
+        }
+        if isAccessibilityTrusted {
+            appState.setIsAccessibilityTrusted(true)
+        }
+        if isJevRecommendationEnabled {
+            appState.setJevRecommendationEnabled(true)
+        }
         self.onSetLaunchAtLogin = onSetLaunchAtLogin
         self.onSetMonitoringEnabled = onSetMonitoringEnabled
         self.onSetLanguage = onSetLanguage
@@ -146,6 +188,17 @@ struct SettingsView: View {
         self.onSetApplicationIgnoreEnabled = onSetApplicationIgnoreEnabled
         self.onSetIgnoredApplications = onSetIgnoredApplications
         self.onClearHistory = onClearHistory
+        self.onSetExperimentalFeaturesEnabled = onSetExperimentalFeaturesEnabled
+        self.hasSavedJevApiKey = hasSavedJevApiKey
+        self.jevStatus = jevStatus
+        self.onSetJevRecommendationEnabled = onSetJevRecommendationEnabled
+        self.onSaveAndVerifyJevApiKey = onSaveAndVerifyJevApiKey
+        self.onRemoveJevApiKey = onRemoveJevApiKey
+        self.isAccessibilityTrusted = isAccessibilityTrusted
+        self.onRequestAccessibilityPermission = onRequestAccessibilityPermission
+        self.onOpenAccessibilitySettings = onOpenAccessibilitySettings
+        self.onFetchJevUsageSummary = onFetchJevUsageSummary
+        self.onClearJevUsage = onClearJevUsage
         _isLaunchAtLoginEnabled = State(initialValue: isLaunchAtLoginEnabled)
         _isMonitoringEnabled = State(initialValue: !appState.isMonitoringPaused)
         _language = State(initialValue: language)
@@ -153,11 +206,15 @@ struct SettingsView: View {
         _retentionPolicy = State(initialValue: retentionPolicy)
         _isApplicationIgnoreEnabled = State(initialValue: isApplicationIgnoreEnabled)
         _ignoredApplications = State(initialValue: ignoredApplications)
+        _isJevRecommendationEnabled = State(initialValue: isJevRecommendationEnabled)
         _selectedIgnoredApplicationID = State(initialValue: ignoredApplications.first?.id)
     }
 
     var body: some View {
-        let tabs = SettingsTabDescriptor.all(language: language)
+        let tabs = SettingsTabDescriptor.visibleTabs(
+            language: language,
+            isExperimentalEnabled: appState.isExperimentalFeaturesEnabled
+        )
 
         VStack(alignment: .leading, spacing: SettingsViewLayoutMetrics.tabSwitcherBottomSpacing) {
             SettingsTabSwitcher(tabs: tabs, selection: $selectedTab)
@@ -166,8 +223,22 @@ struct SettingsView: View {
                 switch selectedTab {
                 case .general:
                     generalTab(descriptors: SettingsPreferenceDescriptor.singleGroup(language: language))
+                case .jev:
+                    JevSettingsView(
+                        language: language,
+                        hasSavedKey: appState.hasSavedJevApiKey,
+                        status: appState.jevConfigurationStatus,
+                        isRecommendationEnabled: jevRecommendationEnabledBinding,
+                        isAccessibilityTrusted: appState.isAccessibilityTrusted,
+                        onSaveAndVerify: onSaveAndVerifyJevApiKey,
+                        onRemoveKey: onRemoveJevApiKey,
+                        onRequestAccessibilityPermission: onRequestAccessibilityPermission,
+                        onOpenAccessibilitySettings: onOpenAccessibilitySettings,
+                        onFetchUsageSummary: onFetchJevUsageSummary,
+                        onClearUsage: onClearJevUsage
+                    )
                 case .ignoredApplications:
-                    ignoredApplicationsTab(title: tabs[1].title)
+                    ignoredApplicationsTab(title: SettingsIgnoredAppsDescriptor.title(language: language))
                 case .about:
                     aboutTab()
                 }
@@ -197,6 +268,11 @@ struct SettingsView: View {
                 installShortcutEventMonitor()
             } else {
                 removeShortcutEventMonitor()
+            }
+        }
+        .onChange(of: appState.isExperimentalFeaturesEnabled) { _, isEnabled in
+            if !isEnabled && selectedTab == .jev {
+                selectedTab = .general
             }
         }
         .onDisappear {
@@ -246,6 +322,22 @@ struct SettingsView: View {
                     title: descriptors[5].title,
                     selection: languageBinding
                 )
+
+                SettingsDivider()
+
+                VStack(alignment: .leading, spacing: 4) {
+                    SettingsToggleRow(
+                        title: SettingsExperimentalFeaturesDescriptor.title(language: language),
+                        isOn: experimentalFeaturesBinding
+                    )
+
+                    Text(SettingsExperimentalFeaturesDescriptor.description(language: language))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineSpacing(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
 
                 SettingsDivider()
 
@@ -330,6 +422,16 @@ struct SettingsView: View {
         )
     }
 
+    private var experimentalFeaturesBinding: Binding<Bool> {
+        Binding(
+            get: { appState.isExperimentalFeaturesEnabled },
+            set: { newValue in
+                appState.setExperimentalFeaturesEnabled(newValue)
+                onSetExperimentalFeaturesEnabled(newValue)
+            }
+        )
+    }
+
     private var monitoringBinding: Binding<Bool> {
         Binding(
             get: { isMonitoringEnabled },
@@ -385,6 +487,19 @@ struct SettingsView: View {
                 isApplicationIgnoreEnabled = newValue
                 onSetApplicationIgnoreEnabled(newValue)
                 errorMessage = nil
+            }
+        )
+    }
+
+    private var jevRecommendationEnabledBinding: Binding<Bool> {
+        Binding(
+            get: { appState.isJevRecommendationEnabled },
+            set: { newValue in
+                guard appState.isJevRecommendationEnabled != newValue else { return }
+
+                isJevRecommendationEnabled = newValue
+                appState.setJevRecommendationEnabled(newValue)
+                onSetJevRecommendationEnabled(newValue)
             }
         )
     }
@@ -575,7 +690,7 @@ private struct SettingsTabButton: View {
     }
 }
 
-private struct SettingsSingleGroup<Content: View>: View {
+struct SettingsSingleGroup<Content: View>: View {
     private let content: Content
 
     init(@ViewBuilder content: () -> Content) {
@@ -951,7 +1066,7 @@ private struct SettingsValueRow: View {
     }
 }
 
-private struct SettingsDivider: View {
+struct SettingsDivider: View {
     var body: some View {
         Divider()
             .padding(.vertical, 1)

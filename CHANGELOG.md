@@ -4,6 +4,29 @@ All notable changes to V-Paste will be documented in this file.
 
 The project follows semantic versioning for public releases.
 
+## [2.0.0] - 2026-09-22
+
+### Added
+
+- Added opt-in Jev contextual recommendations, powered by TypeSafe SystemOne, to surface the clipboard item most likely to be useful for the currently focused destination.
+- Added an Experimental Features gate in Settings. The Jev configuration tab is hidden and Jev is disabled unless this gate is enabled.
+- Added TypeSafe API key validation, Accessibility permission guidance, runtime authentication-state handling, and local diagnostic controls.
+- Added local monthly request, token, and estimated-cost statistics for Jev. Estimates are for reference only; official usage and charges remain available from TypeSafe Usage.
+
+### Changed
+
+- Updated the history panel to present a qualifying recommendation first while preserving normal ordering when the model abstains or confidence is insufficient.
+- Added progressive Accessibility context capture with an 80 ms total budget so panel presentation remains responsive when destination apps are slow.
+- Updated the release version to 2.0.0 with build 4.
+
+### Security
+
+- Jev is off by default and requires both Experimental Features and Jev Recommendations to be enabled explicitly.
+- Requests fail closed when the destination security classification is unknown or secure.
+- Candidate and destination text is filtered for secrets, masked for supported personal data, stripped of local home-directory details, and length-limited before transmission.
+- Secure fields, ignored applications, detected credentials, local clipboard UUIDs, absolute file paths, image binaries, and cached asset paths are not sent to TypeSafe.
+- Removed the weak identifier-only release signing requirement; unsigned local packages are now labeled as preview artifacts and cannot be produced in strict release mode.
+
 ## [1.2.0] - 2026-06-03
 
 ### Changed

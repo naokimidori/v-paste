@@ -69,6 +69,7 @@ enum HistoryCardHeaderFill {
     enum Style: Equatable {
         case groupColor(String)
         case selected
+        case jevRecommended
         case link
         case standard
     }
@@ -76,6 +77,7 @@ enum HistoryCardHeaderFill {
     static func style(
         item: ClipboardItem,
         isSelected: Bool,
+        isJevRecommended: Bool = false,
         groups: [ClipboardGroup]
     ) -> Style {
         if let groupID = item.groupID,
@@ -87,11 +89,26 @@ enum HistoryCardHeaderFill {
             return .selected
         }
 
+        if isJevRecommended {
+            return .jevRecommended
+        }
+
         if HistoryLinkPreview.isWebURL(item.urlString) {
             return .link
         }
 
         return .standard
+    }
+}
+
+/// Jev 上下文推荐卡视觉与无障碍文案支持
+enum HistoryCardRecommendationCopy {
+    static func badgeTitle(language: AppLanguage) -> String {
+        language == .english ? "Jev picked" : "Jev 推荐"
+    }
+
+    static func accessibilityPrefix(language: AppLanguage) -> String {
+        language == .english ? "Jev picked, " : "Jev 推荐, "
     }
 }
 

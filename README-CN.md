@@ -42,7 +42,7 @@ V-Paste 的产品灵感借鉴自 [Paste](https://pasteapp.io/)，尤其是它的
 | 类型友好 | 文本、URL、复制的文件、图片会以不同卡片展示，而不是混成一条列表。 |
 | 上下文完整 | 来源应用、时间、链接标题、favicon、图片尺寸、文件信息。 |
 | 内容整理 | 收藏和分组让重要片段不会被历史流冲走。 |
-| 隐私控制 | 本地 SQLite 存储、保留策略、清空历史、监听开关。 |
+| 隐私控制 | 本地 SQLite 存储、保留策略、清空历史、监听开关，以及默认关闭的可选云端实验功能入口。 |
 | 原生体验 | 菜单栏、全局快捷键、开机启动、SwiftUI 界面、AppKit 窗口行为。 |
 | 轻量体积 | 聚焦原生能力，不引入账号体系、云同步服务或厚重运行时依赖。 |
 
@@ -54,8 +54,9 @@ V-Paste 的产品灵感借鉴自 [Paste](https://pasteapp.io/)，尤其是它的
 - **丰富预览：** URL 卡片可展示页面标题和 favicon；图片卡片展示缩略图和像素尺寸。
 - **收藏与分组：** 常用片段可以收藏，也可以移动到命名分组里长期保存。
 - **本地优先：** 剪贴板历史存储在 macOS 的 Application Support 目录中。
+- **可选上下文推荐：** 实验性的 Jev 集成可使用有限且经过脱敏的目标上下文，优先展示下一步最可能有用的剪贴板条目。
 - **默认轻量：** V-Paste 保持功能边界克制，不依赖云端服务链路。
-- **无需账号：** 没有云端账号、没有 V-Paste 后端服务，本仓库也不包含分析埋点服务。
+- **无需 V-Paste 账号：** 核心剪贴板功能不需要账号或 V-Paste 云端服务；Jev 为可选功能，需要用户自己的 TypeSafe API Key。
 
 ## 界面截图
 
@@ -67,12 +68,12 @@ V-Paste 的产品灵感借鉴自 [Paste](https://pasteapp.io/)，尤其是它的
 
 可以从 [GitHub Releases](https://github.com/naokimidori/v-paste/releases/latest) 下载最新公开构建。
 
-当前发布资产仍属于预览版本，适合测试开源基线，但还没有完成面向公开分发的签名和 notarization。如果 macOS 拦截下载的应用，建议从源码构建，或使用你自己的 Apple Developer 身份重新签名和公证。
+V-Paste 2.0.0 以源码 Release 形式发布，因为项目当前未配置正式的 Developer ID 签名和 notarization。请按照下方步骤从源码构建；此前 Release 中的预览版 DMG 或 ZIP 不应视为已签名的正式二进制。
 
-默认使用流程：
+源码使用流程：
 
-1. 从最新 release 下载 DMG 或 ZIP。
-2. 启动 `V-Paste.app`。
+1. 从最新 Release 下载源码压缩包，或克隆仓库。
+2. 使用 Xcode 或 `./script/build_and_run.sh` 构建并启动 V-Paste。
 3. 点击菜单栏图标，或按 `Option + ~` 打开剪贴板面板。
 4. 在设置里调整保留策略、开机启动、监听开关和显示面板快捷键。
 
@@ -86,7 +87,9 @@ V-Paste 默认本地优先。剪贴板记录会保存在你的 Mac 的 Applicati
 
 应用可能保存剪贴板文本、复制文件路径、图片资源、缩略图、链接预览标题、favicon、来源应用名称、来源应用 bundle identifier、时间戳、收藏、分组和保留策略等元数据。
 
-当复制内容是网页 URL 时，V-Paste 可能会请求该页面和 favicon，用于生成本地链接预览。它不需要账号，不会把剪贴板历史上传到 V-Paste 服务，本仓库也不包含分析或遥测采集服务。
+当复制内容是网页 URL 时，V-Paste 可能会请求该页面和 favicon，用于生成本地链接预览。V-Paste 不包含分析或遥测采集，也不会把剪贴板历史上传到 V-Paste 自有服务。
+
+Jev 上下文推荐属于实验功能，默认关闭，并需要用户自己的 TypeSafe API Key。只有用户同时打开“实验功能”和“Jev 推荐”后，V-Paste 才会在每次推荐请求中向 TypeSafe SystemOne 发送有限的目标上下文，以及经过脱敏和截断的剪贴板候选摘要。安全输入框、安全状态未知的控件和检测到的机密内容都会直接阻断请求。本地显示的用量与费用仅为估算，正式数据以 [TypeSafe Usage](https://console.typesafe.ai/usage) 为准。
 
 完整的数据处理说明见 [PRIVACY.md](PRIVACY.md)。
 

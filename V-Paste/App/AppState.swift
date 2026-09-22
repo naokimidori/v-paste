@@ -11,6 +11,16 @@ final class AppState: ObservableObject {
     @Published private(set) var groups: [ClipboardGroup]
     @Published private(set) var activeGroupID: ClipboardGroup.ID?
     @Published private(set) var panelViewModel: HistoryPanelViewModel
+    @Published var isExperimentalFeaturesEnabled = false
+    @Published var isJevRecommendationEnabled = false
+    @Published var jevConfigurationStatus: JevConfigurationStatus = .notConfigured
+    @Published var hasSavedJevApiKey = false
+    @Published var isAccessibilityTrusted = false
+
+    /// 统一计算的有效运行态：必须同时开启实验功能、开启 Jev 且具备已保存的 API Key
+    var isJevEffectivelyEnabled: Bool {
+        isExperimentalFeaturesEnabled && isJevRecommendationEnabled && hasSavedJevApiKey
+    }
 
     var activeGroup: ClipboardGroup? {
         groups.first { $0.id == activeGroupID }
@@ -45,6 +55,31 @@ final class AppState: ObservableObject {
 
         self.language = language
         panelViewModel.setLanguage(language)
+    }
+
+    func setExperimentalFeaturesEnabled(_ isEnabled: Bool) {
+        guard isExperimentalFeaturesEnabled != isEnabled else { return }
+        isExperimentalFeaturesEnabled = isEnabled
+    }
+
+    func setJevRecommendationEnabled(_ isEnabled: Bool) {
+        guard isJevRecommendationEnabled != isEnabled else { return }
+        isJevRecommendationEnabled = isEnabled
+    }
+
+    func setJevConfigurationStatus(_ status: JevConfigurationStatus) {
+        guard jevConfigurationStatus != status else { return }
+        jevConfigurationStatus = status
+    }
+
+    func setHasSavedJevApiKey(_ hasSaved: Bool) {
+        guard hasSavedJevApiKey != hasSaved else { return }
+        hasSavedJevApiKey = hasSaved
+    }
+
+    func setIsAccessibilityTrusted(_ isTrusted: Bool) {
+        guard isAccessibilityTrusted != isTrusted else { return }
+        isAccessibilityTrusted = isTrusted
     }
 
     @discardableResult

@@ -203,6 +203,7 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
     private var onOpenPreferences: (() -> Void)?
     private var onOpenAbout: (() -> Void)?
     private var onQuit: (() -> Void)?
+    var onDismiss: (() -> Void)?
     private var presentationGeneration = 0
     private var presentationScreen: HistoryPanelScreenSnapshot?
 
@@ -297,6 +298,8 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
     }
 
     func hide() {
+        onDismiss?()
+
         guard let panel else {
             appState.isPanelVisible = false
             return

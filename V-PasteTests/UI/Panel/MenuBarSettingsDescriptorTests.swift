@@ -177,21 +177,25 @@ final class MenuBarSettingsDescriptorTests: XCTestCase {
     func testSettingsTabsSeparateApplicationIgnoreGroup() {
         XCTAssertEqual(SettingsTabDescriptor.all(language: .english).map(\.id), [
             .general,
+            .jev,
             .ignoredApplications,
             .about
         ])
         XCTAssertEqual(SettingsTabDescriptor.all(language: .english).map(\.title), [
             "General",
+            "Jev",
             "App Ignore",
             "About"
         ])
         XCTAssertEqual(SettingsTabDescriptor.all(language: .simplifiedChinese).map(\.title), [
             "通用",
+            "Jev",
             "应用忽略",
             "关于"
         ])
         XCTAssertEqual(SettingsTabDescriptor.all(language: .english).map(\.systemImageName), [
             "gearshape",
+            "sparkles",
             "hand.raised",
             "info.circle"
         ])
@@ -222,14 +226,14 @@ final class MenuBarSettingsDescriptorTests: XCTestCase {
         )
         XCTAssertEqual(
             MenuBarAboutDescriptor.currentVersionLabel(info: info, isDevelopmentBuild: true),
-            "1.1.0-dev"
+            "1.1.0-debug"
         )
         XCTAssertEqual(
             MenuBarAboutDescriptor.currentVersionLabel(
-                info: ["CFBundleShortVersionString": "1.1.0-dev"],
+                info: ["CFBundleShortVersionString": "1.1.0-debug"],
                 isDevelopmentBuild: true
             ),
-            "1.1.0-dev"
+            "1.1.0-debug"
         )
     }
 
@@ -428,7 +432,7 @@ final class MenuBarSettingsDescriptorTests: XCTestCase {
     func testSettingsPanelDescriptorUsesPopupContentMetrics() {
         XCTAssertEqual(SettingsPanelDescriptor.title(language: .english), "Preferences")
         XCTAssertEqual(SettingsPanelDescriptor.title(language: .simplifiedChinese), "偏好设置")
-        XCTAssertEqual(SettingsPanelDescriptor.contentSize, CGSize(width: 580, height: 380))
+        XCTAssertEqual(SettingsPanelDescriptor.contentSize, CGSize(width: 600, height: 430))
     }
 
     func testSettingsPanelPlacementKeepsHorizontalCenterAndUsesUpperThirdVerticalPosition() {

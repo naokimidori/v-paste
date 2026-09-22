@@ -4,6 +4,7 @@ import SwiftUI
 struct HistoryCardView: View {
     let item: ClipboardItem
     let isSelected: Bool
+    let isJevRecommended: Bool
     let groups: [ClipboardGroup]
     let language: AppLanguage
     let onSelect: () -> Void
@@ -11,6 +12,30 @@ struct HistoryCardView: View {
     let onToggleFavorite: () -> Void
     let onAssignToGroup: (ClipboardGroup.ID) -> Void
     let onDelete: () -> Void
+
+    init(
+        item: ClipboardItem,
+        isSelected: Bool,
+        isJevRecommended: Bool = false,
+        groups: [ClipboardGroup],
+        language: AppLanguage,
+        onSelect: @escaping () -> Void,
+        onCopy: @escaping () -> Void,
+        onToggleFavorite: @escaping () -> Void,
+        onAssignToGroup: @escaping (ClipboardGroup.ID) -> Void,
+        onDelete: @escaping () -> Void
+    ) {
+        self.item = item
+        self.isSelected = isSelected
+        self.isJevRecommended = isJevRecommended
+        self.groups = groups
+        self.language = language
+        self.onSelect = onSelect
+        self.onCopy = onCopy
+        self.onToggleFavorite = onToggleFavorite
+        self.onAssignToGroup = onAssignToGroup
+        self.onDelete = onDelete
+    }
 
     @StateObject private var mediaStore = HistoryCardMediaStore()
     @State private var isHovering = false
@@ -68,19 +93,45 @@ struct HistoryCardView: View {
 
     private var header: some View {
         HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(typeLabel)
-                    .font(.system(.headline, design: .rounded, weight: .bold))
+            if isJevRecommended {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text(HistoryCardRecommendationCopy.badgeTitle(language: language))
+                            .font(.system(size: 11.5, weight: .semibold, design: .rounded))
+                    }
                     .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule()
+                            .fill(Color.black.opacity(0.24))
+                    )
                     .lineLimit(1)
 
-                Text(relativeAgeLabel)
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.86))
-                    .lineLimit(1)
+                    Text("\(typeLabel) · \(relativeAgeLabel)")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.76))
+                        .lineLimit(1)
+                }
+                .padding(.leading, 14)
+                .padding(.vertical, 8)
+            } else {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(typeLabel)
+                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+
+                    Text(relativeAgeLabel)
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.86))
+                        .lineLimit(1)
+                }
+                .padding(.leading, 16)
+                .padding(.vertical, 10)
             }
-            .padding(.leading, 16)
-            .padding(.vertical, 10)
 
             Spacer(minLength: 0)
 
@@ -353,11 +404,28 @@ struct HistoryCardView: View {
     }
 
     private var cardBorder: some View {
-        cardShape
-            .strokeBorder(
-                isSelected ? Color(nsColor: .controlAccentColor) : Color(nsColor: .separatorColor).opacity(0.28),
-                lineWidth: isSelected ? 3 : 1
-            )
+        let borderColor: Color = {
+            if isSelected {
+                return Color(nsColor: .controlAccentColor)
+            }
+            if isJevRecommended {
+                return Color(red: 0.20, green: 0.65, blue: 0.65)
+            }
+            return Color(nsColor: .separatorColor).opacity(0.28)
+        }()
+
+        let borderWidth: CGFloat = {
+            if isSelected {
+                return 3
+            }
+            if isJevRecommended {
+                return 2
+            }
+            return 1
+        }()
+
+        return cardShape
+            .strokeBorder(borderColor, lineWidth: borderWidth)
     }
 
     private var cardShape: RoundedRectangle {
@@ -368,12 +436,15 @@ struct HistoryCardView: View {
         switch HistoryCardHeaderFill.style(
             item: item,
             isSelected: isSelected,
+            isJevRecommended: isJevRecommended,
             groups: groups
         ) {
         case let .groupColor(colorHex):
             return Color(hex: colorHex) ?? Color(nsColor: .controlAccentColor)
         case .selected:
             return Color(nsColor: .controlAccentColor)
+        case .jevRecommended:
+            return Color(red: 0.12, green: 0.26, blue: 0.28)
         case .link:
             return Color(nsColor: .systemOrange)
         case .standard:
@@ -488,7 +559,8 @@ struct HistoryCardView: View {
     }
 
     private var accessibilityLabel: Text {
-        Text("\(typeLabel), \(item.displayTitle), \(secondaryLabel)")
+        let prefix = isJevRecommended ? HistoryCardRecommendationCopy.accessibilityPrefix(language: language) : ""
+        return Text("\(prefix)\(typeLabel), \(item.displayTitle), \(secondaryLabel)")
     }
 
     private var previewImage: NSImage? {

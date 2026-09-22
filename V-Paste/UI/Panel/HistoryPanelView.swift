@@ -35,7 +35,7 @@ struct HistoryPanelView: View {
         VStack(alignment: .leading, spacing: HistoryPanelLayout.toolbarToCardSpacing) {
             toolbar
 
-            if viewModel.filteredItems.isEmpty {
+            if viewModel.presentedItems.isEmpty {
                 emptyState
             } else {
                 cardStrip
@@ -288,40 +288,8 @@ struct HistoryPanelView: View {
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 24) {
-                        ForEach(Array(viewModel.filteredItems.enumerated()), id: \.element.id) { index, item in
-                            HistoryCardView(
-                                item: item,
-                                isSelected: index == viewModel.selectedIndex,
-                                groups: groups,
-                                language: viewModel.language,
-                                onSelect: {
-                                    viewModel.selectItem(id: item.id)
-                                },
-                                onCopy: {
-                                    viewModel.selectItem(id: item.id)
-                                    onCopy(item)
-                                },
-                                onToggleFavorite: {
-                                    onToggleFavorite(item)
-                                },
-                                onAssignToGroup: { groupID in
-                                    onAssignItemToGroup(item.id, groupID)
-                                },
-                                onDelete: {
-                                    onDeleteItem(item)
-                                }
-                            )
-                            .id(item.id)
-                            .background {
-                                GeometryReader { card in
-                                    Color.clear.preference(
-                                        key: HistoryCardFramePreferenceKey.self,
-                                        value: [
-                                            item.id: card.frame(in: .named(Self.cardStripCoordinateSpace))
-                                        ]
-                                    )
-                                }
-                            }
+                        ForEach(Array(viewModel.presentedItems.enumerated()), id: \.element.id) { index, item in
+                            cardView(for: item, at: index)
                         }
                     }
                     .padding(.top, HistoryPanelLayout.cardStripTopPadding)
@@ -362,6 +330,46 @@ struct HistoryPanelView: View {
         .contentShape(Rectangle())
         .onTapGesture {
             handleBlankPanelClick()
+        }
+    }
+
+    @ViewBuilder
+    private func cardView(for item: ClipboardItem, at index: Int) -> some View {
+        let isRecommended = viewModel.recommendationState.recommendedItemID == item.id
+        HistoryCardView(
+            item: item,
+            isSelected: index == viewModel.selectedIndex,
+            isJevRecommended: isRecommended,
+            groups: groups,
+            language: viewModel.language,
+            onSelect: {
+                viewModel.selectItem(id: item.id)
+            },
+            onCopy: {
+                viewModel.selectItem(id: item.id)
+                onCopy(item)
+            },
+            onToggleFavorite: {
+                onToggleFavorite(item)
+            },
+            onAssignToGroup: { groupID in
+                onAssignItemToGroup(item.id, groupID)
+            },
+            onDelete: {
+                onDeleteItem(item)
+            }
+        )
+        .id(item.id)
+        .animation(.easeInOut(duration: 0.16), value: isRecommended)
+        .background {
+            GeometryReader { card in
+                Color.clear.preference(
+                    key: HistoryCardFramePreferenceKey.self,
+                    value: [
+                        item.id: card.frame(in: .named(Self.cardStripCoordinateSpace))
+                    ]
+                )
+            }
         }
     }
 
@@ -976,13 +984,13 @@ struct HistoryPanelView: View {
         to newID: ClipboardItem.ID?
     ) -> HistoryPanelScrollReveal.Anchor? {
         guard let newID,
-              let selectedIndex = viewModel.filteredItems.firstIndex(where: { $0.id == newID })
+              let selectedIndex = viewModel.presentedItems.firstIndex(where: { $0.id == newID })
         else {
             return nil
         }
 
         let previousIndex = oldID.flatMap { id in
-            viewModel.filteredItems.firstIndex(where: { $0.id == id })
+            viewModel.presentedItems.firstIndex(where: { $0.id == id })
         }
 
         return HistoryPanelScrollReveal.fallbackAnchor(

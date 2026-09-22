@@ -34,6 +34,7 @@ fi
 /usr/bin/ditto "$BUILT_APP" "$STAGED_APP"
 
 if [ -n "${CODESIGN_IDENTITY:-}" ]; then
+  echo "==> 使用代码签名证书进行签名: $CODESIGN_IDENTITY"
   /usr/bin/codesign \
     --force \
     --deep \
@@ -41,15 +42,34 @@ if [ -n "${CODESIGN_IDENTITY:-}" ]; then
     --timestamp \
     --sign "$CODESIGN_IDENTITY" \
     "$STAGED_APP"
+else
+  if [ "${STRICT_RELEASE:-0}" = "1" ]; then
+    echo "错误: STRICT_RELEASE=1 模式下必须配置 CODESIGN_IDENTITY 进行正式签名。" >&2
+    exit 1
+  fi
+  echo "==> [警告] 未配置 CODESIGN_IDENTITY，使用系统默认临时签名 (ad-hoc) 打包本地预览版。" >&2
+  echo "==> [警告] 遵循安全审查规范，不手工注入弱 designated requirement。此产物仅供本地开发调试，严禁作为正式发布版本分发！" >&2
+  /usr/bin/codesign \
+    --force \
+    --deep \
+    --sign - \
+    "$STAGED_APP"
 fi
 
+echo "==> 验证代码签名状态与 Designated Requirement:"
 /usr/bin/codesign --verify --deep --strict --verbose=2 "$STAGED_APP"
+/usr/bin/codesign -d -r- "$STAGED_APP" || true
 
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$STAGED_APP/Contents/Info.plist" 2>/dev/null || true)"
 BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$STAGED_APP/Contents/Info.plist" 2>/dev/null || true)"
-VERSION="${VERSION:-1.2.0}"
-BUILD="${BUILD:-3}"
-ARTIFACT_BASENAME="$APP_NAME-$VERSION-macOS"
+VERSION="${VERSION:-2.0.0}"
+BUILD="${BUILD:-4}"
+
+if [ -n "${CODESIGN_IDENTITY:-}" ]; then
+  ARTIFACT_BASENAME="$APP_NAME-$VERSION-macOS"
+else
+  ARTIFACT_BASENAME="$APP_NAME-$VERSION-macOS-preview"
+fi
 ZIP_PATH="$DIST_DIR/$ARTIFACT_BASENAME.zip"
 DMG_PATH="$DIST_DIR/$ARTIFACT_BASENAME.dmg"
 
@@ -75,9 +95,14 @@ if [ -n "${CODESIGN_IDENTITY:-}" ] && [ -n "${NOTARY_PROFILE:-}" ]; then
   xcrun stapler staple "$DMG_PATH"
 fi
 
+SIGN_TYPE="${CODESIGN_IDENTITY:-本地临时预览签名 (Ad-Hoc)}"
+
 cat <<SUMMARY
+========================================
 Packaged V-Paste $VERSION ($BUILD)
+签名模式: $SIGN_TYPE
 App: $STAGED_APP
 ZIP: $ZIP_PATH
 DMG: $DMG_PATH
+========================================
 SUMMARY

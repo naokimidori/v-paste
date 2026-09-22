@@ -1011,4 +1011,41 @@ final class HistoryPanelSupportTests: XCTestCase {
             "Release notes polish\n- tighten card hierarchy\n- improve toolbar"
         )
     }
+
+    func testRecommendationHeaderFillStyle() {
+        let item = makeItem(
+            sourceHash: "rec-item",
+            displayTitle: "Recommended Item",
+            plainText: "Recommended text"
+        )
+
+        // 推荐且未选中：.jevRecommended
+        XCTAssertEqual(
+            HistoryCardHeaderFill.style(
+                item: item,
+                isSelected: false,
+                isJevRecommended: true,
+                groups: []
+            ),
+            .jevRecommended
+        )
+
+        // 推荐且被选中：优先保留 .selected
+        XCTAssertEqual(
+            HistoryCardHeaderFill.style(
+                item: item,
+                isSelected: true,
+                isJevRecommended: true,
+                groups: []
+            ),
+            .selected
+        )
+    }
+
+    func testRecommendationCopyBilingual() {
+        XCTAssertEqual(HistoryCardRecommendationCopy.badgeTitle(language: .english), "Jev picked")
+        XCTAssertEqual(HistoryCardRecommendationCopy.badgeTitle(language: .simplifiedChinese), "Jev 推荐")
+        XCTAssertEqual(HistoryCardRecommendationCopy.accessibilityPrefix(language: .english), "Jev picked, ")
+        XCTAssertEqual(HistoryCardRecommendationCopy.accessibilityPrefix(language: .simplifiedChinese), "Jev 推荐, ")
+    }
 }

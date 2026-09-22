@@ -3,12 +3,35 @@ import QuartzCore
 import ServiceManagement
 import SwiftUI
 
+/// 线程安全的 JevUsageStore 容器，解耦 MainActor 隔离与后台 Sendable 闭包
+final class JevUsageStoreBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _store: JevUsageStoring
+
+    var store: JevUsageStoring {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _store
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            _store = newValue
+        }
+    }
+
+    init(_ store: JevUsageStoring) {
+        self._store = store
+    }
+}
+
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    let appState = AppState.preview()
+    private(set) var appState = AppState.preview()
 
-    private var preferences = AppPreferences()
-    private let launchAtLoginManager: LaunchAtLoginManaging = SystemLaunchAtLoginManager()
+    var preferences = AppPreferences()
+    private var launchAtLoginManager: LaunchAtLoginManaging = SystemLaunchAtLoginManager()
     private lazy var historyPanelController = HistoryPanelController(appState: appState)
     private lazy var copyToastController = CopyToastController()
     private var assetCache: AssetCache?
@@ -60,18 +83,178 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         },
         onClearHistory: { [weak self] in
             self?.clearHistoryFromSettings()
+        },
+        isExperimentalFeaturesEnabled: { [weak self] in
+            self?.preferences.isExperimentalFeaturesEnabled ?? false
+        },
+        onSetExperimentalFeaturesEnabled: { [weak self] isEnabled in
+            self?.setExperimentalFeaturesEnabled(isEnabled)
+        },
+        hasSavedJevApiKey: { [weak self] in
+            self?.hasSavedJevApiKey() ?? false
+        },
+        currentJevStatus: { [weak self] in
+            self?.currentJevConfigurationStatus() ?? .notConfigured
+        },
+        isJevRecommendationEnabled: { [weak self] in
+            self?.isJevRecommendationEnabled() ?? false
+        },
+        onSetJevRecommendationEnabled: { [weak self] isEnabled in
+            self?.setJevRecommendationEnabled(isEnabled)
+        },
+        onSaveAndVerifyJevApiKey: { [weak self] key in
+            await self?.saveAndVerifyJevApiKey(key) ?? .invalidKey
+        },
+        onRemoveJevApiKey: { [weak self] in
+            self?.removeJevApiKey()
+        },
+        isAccessibilityTrusted: { [weak self] in
+            self?.isAccessibilityTrusted() ?? false
+        },
+        onRequestAccessibilityPermission: { [weak self] in
+            self?.requestAccessibilityPermission()
+        },
+        onOpenAccessibilitySettings: { [weak self] in
+            self?.openAccessibilitySettings()
+        },
+        onFetchJevUsageSummary: { [weak self] in
+            guard let self else { return .zero }
+            return (try? await self.jevUsageStore.currentMonthSummary(referenceDate: Date())) ?? .zero
+        },
+        onClearJevUsage: { [weak self] in
+            guard let self else { return }
+            try? await self.jevUsageStore.clearAll()
         }
     )
     private let writebackService = ClipboardWritebackService()
+    var jevCredentialStore: JevCredentialStoring = JevCredentialStore()
+    var jevValidationClient: JevValidationClientProtocol = JevValidationClient()
+    private let jevUsageStoreBox = JevUsageStoreBox(MockJevUsageStore())
+
+    var jevUsageStore: JevUsageStoring {
+        get { jevUsageStoreBox.store }
+        set { jevUsageStoreBox.store = newValue }
+    }
+    var accessibilityPermissionService: AccessibilityPermissionServing = AccessibilityPermissionService()
+    var destinationTracker: DestinationApplicationTracking = DestinationApplicationTracker()
+    var destinationContextCapture: DestinationContextCapturing = DestinationContextCapture()
+    lazy var recommendationService: JevRecommendationServiceProtocol = JevRecommendationService(
+        credentialStore: jevCredentialStore,
+        usageStoreProvider: { [box = jevUsageStoreBox] in box.store },
+        isEnabledProvider: { [jevCredentialStore] in
+            UserDefaults.standard.bool(forKey: "settings.experimentalFeaturesEnabled")
+                && UserDefaults.standard.bool(forKey: "settings.isJevRecommendationEnabled")
+                && jevCredentialStore.hasApiKey()
+        },
+        onAuthError: { [weak self] error in
+            Task { @MainActor [weak self] in
+                self?.handleJevAuthError(error)
+            }
+        }
+    )
+    private var lastJevValidationStatus: JevConfigurationStatus?
+
+    override init() {
+        super.init()
+    }
+
+    init(
+        appState: AppState? = nil,
+        preferences: AppPreferences = AppPreferences(),
+        launchAtLoginManager: LaunchAtLoginManaging = SystemLaunchAtLoginManager(),
+        jevCredentialStore: JevCredentialStoring = JevCredentialStore(),
+        jevValidationClient: JevValidationClientProtocol = JevValidationClient(),
+        jevUsageStore: JevUsageStoring? = nil,
+        accessibilityPermissionService: AccessibilityPermissionServing = AccessibilityPermissionService(),
+        destinationTracker: DestinationApplicationTracking = DestinationApplicationTracker(),
+        destinationContextCapture: DestinationContextCapturing = DestinationContextCapture(),
+        recommendationService: JevRecommendationServiceProtocol? = nil
+    ) {
+        self.appState = appState ?? AppState.preview()
+        self.preferences = preferences
+        self.launchAtLoginManager = launchAtLoginManager
+        self.jevCredentialStore = jevCredentialStore
+        self.jevValidationClient = jevValidationClient
+        super.init()
+        if let jevUsageStore {
+            self.jevUsageStore = jevUsageStore
+        }
+        self.accessibilityPermissionService = accessibilityPermissionService
+        self.destinationTracker = destinationTracker
+        self.destinationContextCapture = destinationContextCapture
+        if let recommendationService {
+            self.recommendationService = recommendationService
+        }
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         appState.setLanguage(preferences.language)
+        configureJevInitialState()
         configureServices()
+        configureJevRecommendationLifecycle()
     }
 
     func toggleHistoryPanel() {
-        historyPanelController.toggle(
+        if appState.isPanelVisible {
+            historyPanelController.hide()
+            return
+        }
+
+        // 1. 在面板激活前（NSApp.activate 之前）捕获目标前台应用与输入框无障碍上下文
+        let target = destinationTracker.resolveTarget(frontmost: NSWorkspace.shared.frontmostApplication)
+        let capturedContext = target.flatMap { destinationContextCapture.captureBeforeActivation(for: $0) }
+
+        // 2. 显示面板
+        showHistoryPanel()
+
+        // 3. 发起 Jev 智能推荐
+        let isEnabled = isJevRecommendationEnabled()
+        let effectiveContext = capturedContext ?? DestinationContext.applicationOnly(
+            applicationName: target?.applicationName ?? "General",
+            bundleIdentifier: target?.bundleIdentifier,
+            processIdentifier: target?.processIdentifier ?? 0
+        )
+
+        if isEnabled {
+            JevLogger.log("[Jev] 呼出历史面板，触发推荐: 目标应用=\(effectiveContext.applicationName)")
+            let currentItems = appState.panelViewModel.allItems
+            let isIgnoreEnabled = preferences.isApplicationIgnoreEnabled
+            let ignoredRules = preferences.ignoredApplications
+            let ignoredBundleIDs: Set<String> = isIgnoreEnabled ? Set(ignoredRules.map { $0.bundleIdentifier }) : []
+
+            recommendationService.requestRecommendation(
+                destination: effectiveContext,
+                currentItems: currentItems,
+                ignoredBundleIDs: ignoredBundleIDs
+            ) { [weak self] state in
+                Task { @MainActor in
+                    guard let self, self.appState.isPanelVisible else {
+                        JevLogger.log("[Jev] 收到结果但面板已关闭或实例已释放，丢弃结果")
+                        return
+                    }
+                    switch state {
+                    case .ready(let itemID):
+                        JevLogger.log("[Jev] 推荐生效，应用卡片置顶")
+                        self.appState.panelViewModel.applyRecommendation(recommendedItemID: itemID)
+                    case .abstained:
+                        JevLogger.log("[Jev] 决策结果: 弃权（保持原有历史顺序）")
+                    case .unavailable:
+                        JevLogger.log("[Jev] 决策结果: 服务暂不可用或超时")
+                    case .inactive:
+                        JevLogger.log("[Jev] 决策结果: 未激活")
+                    case .loading:
+                        JevLogger.log("[Jev] 决策正在进行中...")
+                    }
+                }
+            }
+        } else {
+            JevLogger.log("[Jev] Jev 推荐未启用或未配置可用 API Key，跳过推荐")
+        }
+    }
+
+    private func showHistoryPanel() {
+        historyPanelController.show(
             onCopy: { [weak self] item in
                 if self?.copyToPasteboard(item) == true {
                     self?.copyToastController.show()
@@ -112,6 +295,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
+    private func configureJevRecommendationLifecycle() {
+        // 监听前台应用激活，供目标应用追踪服务记录
+        let tracker = destinationTracker
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+            tracker.recordActiveApplication(app)
+        }
+
+        // 面板关闭时，清理推荐会话与临时推荐状态
+        historyPanelController.onDismiss = { [weak self] in
+            self?.recommendationService.cancelCurrentSession()
+            self?.appState.panelViewModel.clearRecommendation()
+        }
+
+        // 用户在面板内发生交互（按键、搜索、切换筛选等），通知推荐服务锁定防抢占
+        appState.panelViewModel.onUserInteraction = { [weak self] in
+            self?.recommendationService.notifyUserInteracted()
+        }
+    }
+
     private func configureServices() {
         do {
             let paths = try AppPaths.make(
@@ -141,6 +348,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.store = store
             self.assetCache = assetCache
             self.linkMetadataFetcher = LinkMetadataFetcher(assetCache: assetCache)
+            let usageDatabaseURL = paths.appSupportDirectoryURL.appendingPathComponent("jev_usage.sqlite3")
+            if !(self.jevUsageStore is SQLiteJevUsageStore) {
+                if let store = try? SQLiteJevUsageStore(databaseURL: usageDatabaseURL) {
+                    self.jevUsageStore = store
+                }
+            }
             configureMenuBar()
             configureHotKey()
             loadHistory(from: store)
@@ -384,6 +597,220 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             NSLog("V-Paste failed to apply clipboard retention policy: \(String(describing: error))")
         }
+    }
+
+    // MARK: - Jev 设置与凭据管理
+
+    func configureJevInitialState() {
+        let isExperimental = preferences.isExperimentalFeaturesEnabled
+        appState.setExperimentalFeaturesEnabled(isExperimental)
+
+        // 启动自愈：若实验功能未开启，强制重置 Jev 开关为 false
+        if !isExperimental && preferences.isJevRecommendationEnabled {
+            preferences.isJevRecommendationEnabled = false
+        }
+
+        let hasKey = hasSavedJevApiKey()
+        if !hasKey && preferences.isJevRecommendationEnabled {
+            // 自愈：若未配置 API Key 但开关为 true，自动修正并关闭开关
+            preferences.isJevRecommendationEnabled = false
+        }
+
+        // 启动自愈：若之前记录了鉴权失败（401/403），跨重启保持开关关闭并恢复错误状态
+        if let requirement = preferences.jevAuthRequirement {
+            preferences.isJevRecommendationEnabled = false
+            let status: JevConfigurationStatus = (requirement == "permissionDenied") ? .permissionDenied : .invalidKey
+            lastJevValidationStatus = status
+            appState.setJevConfigurationStatus(status)
+        } else {
+            let status: JevConfigurationStatus = hasKey
+                ? (preferences.isJevRecommendationEnabled ? .enabled : .ready)
+                : .notConfigured
+            lastJevValidationStatus = status
+            appState.setJevConfigurationStatus(status)
+        }
+
+        appState.setHasSavedJevApiKey(hasKey)
+        appState.setIsAccessibilityTrusted(isAccessibilityTrusted())
+        appState.setJevRecommendationEnabled(preferences.isJevRecommendationEnabled)
+    }
+
+    func setExperimentalFeaturesEnabled(_ isEnabled: Bool) {
+        preferences.isExperimentalFeaturesEnabled = isEnabled
+        appState.setExperimentalFeaturesEnabled(isEnabled)
+        if !isEnabled {
+            // 关闭实验功能时，必须同时关闭 Jev 推荐、取消在途请求并清除面板推荐卡，但不删除 Keychain 中的 API Key
+            setJevRecommendationEnabled(false)
+            recommendationService.cancelCurrentSession()
+            appState.panelViewModel.clearRecommendation()
+        }
+    }
+
+    func hasSavedJevApiKey() -> Bool {
+        guard let key = try? jevCredentialStore.readApiKey(), !key.isEmpty else {
+            return false
+        }
+        return true
+    }
+
+    func currentJevConfigurationStatus() -> JevConfigurationStatus {
+        guard hasSavedJevApiKey() else {
+            return .notConfigured
+        }
+        if let requirement = preferences.jevAuthRequirement {
+            return (requirement == "permissionDenied") ? .permissionDenied : .invalidKey
+        }
+        if let lastJevValidationStatus {
+            return lastJevValidationStatus
+        }
+        return preferences.isJevRecommendationEnabled ? .enabled : .ready
+    }
+
+    func isJevRecommendationEnabled() -> Bool {
+        preferences.isExperimentalFeaturesEnabled &&
+        preferences.isJevRecommendationEnabled &&
+        hasSavedJevApiKey() &&
+        preferences.jevAuthRequirement == nil
+    }
+
+    func setJevRecommendationEnabled(_ isEnabled: Bool) {
+        // 门槛校验：仅在已保存 Key 且不存在未解决的鉴权失败状态时允许开启
+        guard !isEnabled || (hasSavedJevApiKey() && preferences.jevAuthRequirement == nil) else {
+            preferences.isJevRecommendationEnabled = false
+            appState.setJevRecommendationEnabled(false)
+            return
+        }
+
+        preferences.isJevRecommendationEnabled = isEnabled
+        appState.setJevRecommendationEnabled(isEnabled)
+
+        // 若为关闭推荐，不应覆盖已有的鉴权失败状态（避免把失效 Key 重置为 ready）
+        if !isEnabled {
+            if preferences.jevAuthRequirement != nil {
+                return
+            }
+            let newStatus: JevConfigurationStatus = .ready
+            lastJevValidationStatus = newStatus
+            appState.setJevConfigurationStatus(newStatus)
+        } else {
+            let newStatus: JevConfigurationStatus = .enabled
+            lastJevValidationStatus = newStatus
+            appState.setJevConfigurationStatus(newStatus)
+        }
+    }
+
+    func saveAndVerifyJevApiKey(_ key: String) async -> JevValidationResult {
+        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedKey.isEmpty else {
+            return .invalidKey
+        }
+
+        let result = await jevValidationClient.validateKey(trimmedKey)
+        let status: JevConfigurationStatus
+        switch result {
+        case .valid:
+            status = preferences.isJevRecommendationEnabled ? .enabled : .ready
+        case .invalidKey:
+            status = .invalidKey
+        case .permissionDenied:
+            status = .permissionDenied
+        case .modelUnavailable:
+            status = .modelUnavailable
+        case .networkUnavailable(let message):
+            status = .networkUnavailable(message)
+        }
+
+        if result == .valid {
+            // 验证成功，清除鉴权失败持久化标记
+            preferences.jevAuthRequirement = nil
+            do {
+                try jevCredentialStore.saveApiKey(trimmedKey)
+                lastJevValidationStatus = status
+                appState.setHasSavedJevApiKey(true)
+                appState.setJevConfigurationStatus(status)
+            } catch {
+                NSLog("V-Paste 保存 Jev API Key 到 Keychain 失败: \(String(describing: error))")
+                let failureResult = JevValidationResult.networkUnavailable(message: "Keychain storage failed")
+                lastJevValidationStatus = .networkUnavailable("Keychain storage failed")
+                appState.setHasSavedJevApiKey(false)
+                appState.setJevConfigurationStatus(.networkUnavailable("Keychain storage failed"))
+                return failureResult
+            }
+        } else {
+            if result == .invalidKey {
+                preferences.jevAuthRequirement = "invalidKey"
+            } else if result == .permissionDenied {
+                preferences.jevAuthRequirement = "permissionDenied"
+            }
+            lastJevValidationStatus = status
+            appState.setJevConfigurationStatus(status)
+            if status == .invalidKey || status == .permissionDenied {
+                // 若凭据明确无效或被拒绝访问，关闭推荐开关
+                preferences.isJevRecommendationEnabled = false
+                appState.setJevRecommendationEnabled(false)
+            }
+        }
+        return result
+    }
+
+    /// 处理运行时鉴权错误（401/403），关闭推荐开关并同步设置视图状态，保留现有 Key 便于用户查看和修改
+    @MainActor
+    func handleJevAuthError(_ error: JevDecisionError) {
+        let status: JevConfigurationStatus
+        let requirementKey: String
+        switch error {
+        case .invalidAPIKey:
+            status = .invalidKey
+            requirementKey = "invalidKey"
+        case .permissionDenied:
+            status = .permissionDenied
+            requirementKey = "permissionDenied"
+        default:
+            return
+        }
+
+        // 持久化记录鉴权失败状态，跨应用重启与实验功能开关保持
+        preferences.jevAuthRequirement = requirementKey
+        preferences.isJevRecommendationEnabled = false
+        appState.setJevRecommendationEnabled(false)
+        lastJevValidationStatus = status
+        appState.setJevConfigurationStatus(status)
+        recommendationService.cancelCurrentSession()
+        appState.panelViewModel.clearRecommendation()
+    }
+
+    func removeJevApiKey() {
+        // 取消当前在途推荐会话并清除面板临时卡片
+        recommendationService.cancelCurrentSession()
+        appState.panelViewModel.clearRecommendation()
+
+        // 清除持久化的鉴权失败状态
+        preferences.jevAuthRequirement = nil
+
+        do {
+            try jevCredentialStore.deleteApiKey()
+        } catch {
+            NSLog("V-Paste 删除 Jev API Key 失败: \(String(describing: error))")
+        }
+        appState.setHasSavedJevApiKey(false)
+        preferences.isJevRecommendationEnabled = false
+        appState.setJevRecommendationEnabled(false)
+        lastJevValidationStatus = .notConfigured
+        appState.setJevConfigurationStatus(.notConfigured)
+    }
+
+    // MARK: - 辅助功能权限
+
+    func isAccessibilityTrusted() -> Bool {
+        accessibilityPermissionService.isTrusted
+    }
+
+    func requestAccessibilityPermission() {
+        _ = accessibilityPermissionService.requestPermission()
+    }
+
+    func openAccessibilitySettings() {
+        accessibilityPermissionService.openAccessibilitySettings()
     }
 
     private func openPreferences() {

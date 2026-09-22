@@ -42,7 +42,7 @@ Clipboard managers are useful because they remember what you forget. They are ri
 | Real item types | Text, URLs, copied files, and images are rendered as distinct cards instead of one generic list. |
 | Useful context | Source app names, timestamps, link previews, favicons, image sizes, and file metadata. |
 | Organization | Favorites and groups keep important snippets from disappearing into the stream. |
-| Privacy controls | Local SQLite storage, retention settings, clear-history actions, and monitoring controls. |
+| Privacy controls | Local SQLite storage, retention settings, clear-history actions, monitoring controls, and an off-by-default gate for optional cloud-assisted experiments. |
 | Native Mac feel | Menu bar presence, global shortcut, launch-at-login, SwiftUI views, AppKit window behavior. |
 | Lightweight footprint | A focused native app without account flows, cloud sync services, or heavyweight runtime dependencies. |
 
@@ -54,8 +54,9 @@ Clipboard managers are useful because they remember what you forget. They are ri
 - **Rich previews:** URL cards can show page titles and favicons; image cards show thumbnails and pixel dimensions.
 - **Favorites and groups:** Pin items that matter and move reusable snippets into named groups.
 - **Local-first storage:** Clipboard history is stored under your macOS Application Support directory.
+- **Optional contextual recommendations:** An experimental Jev integration can use limited, redacted destination context to surface the clipboard item most likely to be useful next.
 - **Lightweight by default:** V-Paste keeps the app surface focused and avoids cloud service dependencies.
-- **No account required:** No cloud account, no hosted V-Paste backend, and no analytics service in this repository.
+- **No V-Paste account required:** Core clipboard features need no account or hosted V-Paste backend. Jev is optional and requires your own TypeSafe API key.
 
 ## Screenshots
 
@@ -67,12 +68,12 @@ Clipboard managers are useful because they remember what you forget. They are ri
 
 Download the latest public build from [GitHub Releases](https://github.com/naokimidori/v-paste/releases/latest).
 
-Current release assets are preview builds. They are useful for testing the open-source baseline, but they are not yet signed and notarized for polished public distribution. If macOS blocks the downloaded app, build from source or create a signed/notarized build with your own Apple Developer identity.
+V-Paste 2.0.0 is published as a source release because official Developer ID signing and notarization are not configured for this project. Build it from source using the steps below. Do not treat older preview DMG or ZIP assets as signed production binaries.
 
-Default workflow:
+Source workflow:
 
-1. Download the DMG or ZIP from the latest release.
-2. Launch `V-Paste.app`.
+1. Download the source archive from the latest release, or clone the repository.
+2. Build and launch V-Paste with Xcode or `./script/build_and_run.sh`.
 3. Use the menu bar icon or press `Option + ~` to open the clipboard panel.
 4. Open Settings to adjust retention, launch-at-login, monitoring, and the show-panel shortcut.
 
@@ -86,7 +87,9 @@ V-Paste is local-first by design. Clipboard records are stored on your Mac under
 
 The app may store clipboard text, copied file paths, image assets, thumbnails, link preview titles, favicons, source app names, source app bundle identifiers, timestamps, favorites, groups, and retention metadata.
 
-When a copied item is a web URL, V-Paste may fetch the page and favicon to create a local link preview. It does not need an account, does not upload clipboard history to a V-Paste service, and does not include analytics or telemetry collection in this repository.
+When a copied item is a web URL, V-Paste may fetch the page and favicon to create a local link preview. V-Paste does not include analytics or telemetry collection and does not upload clipboard history to a V-Paste service.
+
+Jev contextual recommendations are experimental, off by default, and require your own TypeSafe API key. If you explicitly enable both Experimental Features and Jev Recommendations, V-Paste sends limited destination context and redacted, truncated clipboard candidate summaries to TypeSafe SystemOne for each recommendation request. Secure or unclassified fields and detected secrets fail closed without a request. Local usage and cost figures are estimates only; refer to [TypeSafe Usage](https://console.typesafe.ai/usage) for official values.
 
 Read the full data-handling notes in [PRIVACY.md](PRIVACY.md).
 
